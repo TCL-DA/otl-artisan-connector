@@ -12,7 +12,8 @@ const moc = '/* ── Khởi động';
 assert.ok(src.includes(moc), "do-web.js phải còn khối Khởi động");
 const than = src.slice(0, src.indexOf(moc));
 const lay = ["crc16", "khungRtu", "khungAscii", "doKhungRtu", "doKhungAscii", "soCoDau",
-  "datKhoa", "COMPORT_RE", "BAUDS", "FRAMES", "MODES", "O_DOC"];
+  "datKhoa", "oVao", "ghiSlave", "slaveCanThu", "oMoDau", "trongKhoang", "hanDay", "hanNgan",
+  "COMPORT_RE", "BAUDS", "FRAMES", "MODES", "MAY", "THU_TU", "TEMP_OK", "TEMP_X10"];
 const M = new Function(than + "\nreturn {" + lay.join(",") + "};")();
 
 const hex = (u8) => [...u8].map((x) => x.toString(16).toUpperCase().padStart(2, "0")).join("");
@@ -117,8 +118,83 @@ test("48 tổ hợp, xuất xưởng 9600 8N1 RTU thử đầu tiên", () => {
   assert.deepEqual(M.FRAMES[0], ["none", 1]);
 });
 
-test("bảng ô đọc đúng sơ đồ máy 3 kg bản Frecon", () => {
-  assert.deepEqual(M.O_DOC, [{ slave: 1, reg: 4096, ten: "BT" }, { slave: 2, reg: 4096, ten: "ET" }]);
+test("đủ ba kiểu máy, thứ tự thử giống bản .exe", () => {
+  assert.deepEqual(M.THU_TU, ["3kg-frecon", "1kg-bus", "auto-board"]);
+  for (const id of M.THU_TU) assert.ok(M.MAY[id].probe.length >= 2, id);
+});
+
+test("bảng ô đọc khớp bản .exe", () => {
+  const bt = (id) => M.MAY[id].probe[0], et = (id) => M.MAY[id].probe[1];
+  assert.equal(bt("3kg-frecon").reg, 4096);
+  assert.equal(et("3kg-frecon").reg, 4096);
+  assert.equal(M.MAY["3kg-frecon"].probe[2].reg, 12288);
+  assert.equal(bt("1kg-bus").reg, 4096);
+  assert.equal(M.MAY["1kg-bus"].probe[2].reg, 8451);
+  assert.equal(bt("auto-board").reg, 0);
+  assert.equal(et("auto-board").reg, 1);
+  assert.equal(M.MAY["auto-board"].motSlave, true);
+});
+
+test("hai khoảng nhiệt độ rời nhau ở đầu trên", () => {
+  assert.ok(M.TEMP_OK[1] < M.TEMP_X10[1]);
+  assert.equal(M.TEMP_X10[1], 10 * M.TEMP_OK[1]);
+});
+
+test("ô mở đầu bỏ trùng: máy 3 kg và 1 kg cùng (slave 1, ô 4096)", () => {
+  const o = M.oMoDau(false);
+  assert.equal(o.length, 2, JSON.stringify(o));
+  assert.ok(o.some(([s, r]) => s === 1 && r === 4096));
+  assert.ok(o.some(([s, r]) => s === 1 && r === 0));
+});
+
+test("quét slave mở rộng danh sách nhưng vẫn không trùng", () => {
+  const o = M.oMoDau(true);
+  const khoa = o.map((x) => x.join(":"));
+  assert.equal(khoa.length, new Set(khoa).size, "còn ô trùng");
+  assert.ok(o.length > M.oMoDau(false).length);
+});
+
+test("ET của máy 1 kg không được nhận trùng slave của BT", () => {
+  const p = M.MAY["1kg-bus"].probe[1];
+  assert.equal(p.khacSlave, "BT");
+  assert.ok(!M.slaveCanThu(p, { BT: 3 }).includes(3));
+  assert.ok(M.slaveCanThu(p, {}).includes(3));
+});
+
+test("ô của máy auto đi theo slave của BT", () => {
+  const p = M.MAY["auto-board"].probe[1];
+  assert.deepEqual(M.slaveCanThu(p, { BT: 6 }), [6]);
+});
+
+test("ghiSlave máy đọc thẳng bus: hai ô cùng 4096 nhận đúng thứ tự BT rồi ET", () => {
+  const d = ["[Modbus]", "input1deviceId=1", "input1register=4096",
+    "input2deviceId=1", "input2register=4096",
+    "input3deviceId=1", "input3register=8451", "[Alarms]"];
+  assert.equal(M.ghiSlave(d, M.MAY["1kg-bus"], { BT: 3, "ET": 5, "Biến tần": 7 }), 3);
+  assert.ok(d.includes("input1deviceId=3") && d.includes("input2deviceId=5"));
+  assert.ok(d.includes("input3deviceId=7"));
+});
+
+test("ghiSlave máy auto áp cho MỌI ô vào", () => {
+  const d = ["[Modbus]"];
+  for (let i = 1; i <= 5; i++) d.push(`input${i}deviceId=1`, `input${i}register=${i - 1}`);
+  d.push("[Alarms]");
+  assert.equal(M.ghiSlave(d, M.MAY["auto-board"], { BT: 6, ET: 6 }), 5);
+  for (let i = 1; i <= 5; i++) assert.ok(d.includes(`input${i}deviceId=6`), String(i));
+});
+
+test("nhịp chờ ngắn thật sự ngắn hơn nhịp đầy đủ", () => {
+  for (const baud of M.BAUDS) assert.ok(M.hanNgan(7, baud) < M.hanDay(7, baud), String(baud));
+});
+
+test("đủ ba tệp mẫu .aset, đúng ô BT/ET của từng máy", () => {
+  const mong = { "3kg-frecon": [4096, 4096], "1kg-bus": [4096, 4096], "auto-board": [0, 1] };
+  for (const [ten, [bt, et]] of Object.entries(mong)) {
+    const d = readFileSync(new URL(`./mau-${ten}.aset`, import.meta.url), "utf8").split(/\r?\n/);
+    const o = M.oVao(d);
+    assert.equal(o[0][1], bt, ten);
+    assert.equal(o[1][1], et, ten);
+  }
 });
 
 test("vá tệp mẫu thật ra đúng sáu khoá trong [Modbus]", () => {

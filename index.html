@@ -39,6 +39,15 @@
 .ket .xuat .btn:disabled{ color:var(--graphite); background:transparent; border-color:var(--graphite);
   cursor:not-allowed; }
 .ket .nho{ font-size:15px; color:var(--graphite); max-width:72ch; }
+/* Tên máy app nhận ra: thứ đầu tiên thợ cần nhìn thấy, đặt trên dải số. */
+.ket .ket-may{ margin:6px 0 0; font:700 24px/1.2 var(--font); text-transform:uppercase;
+  letter-spacing:.03em; color:var(--canvas); }
+.web .hoi{ margin-top:var(--gap-l); }
+.web .hoi .hang{ display:flex; gap:var(--gap); flex-wrap:wrap; margin-top:var(--gap); }
+.web .hoi .btn{ display:flex; flex-direction:column; align-items:flex-start; gap:4px;
+  text-align:left; min-width:260px; }
+.web .hoi .btn span{ font-size:14px; font-weight:500; letter-spacing:.02em; text-transform:none;
+  color:var(--ink-2); font-variant-numeric:tabular-nums; }
 .web .bao{ border-bottom-color:var(--graphite); }
 @media (max-width:860px){ .doi{ grid-template-columns:1fr; gap:var(--gap-l); } }
 </style>
@@ -74,8 +83,8 @@
       tốc độ truyền, khung truyền và kiểu Modbus của máy rang, đọc thử BT/ET, rồi xuất tệp <b>.aset</b>
       cho Artisan. Bốn việc còn lại của bản .exe thì trình duyệt bị cấm làm: cài driver cáp, tự tìm cổng
       COM, tự mở Artisan, và kiểm lại xem Artisan đã giữ được cổng chưa.</p>
-    <p class="web-mo"><b>Khối này hiện chỉ dò máy OTL 3 kg bản Frecon.</b> Máy 1 kg và máy bản auto
-      thì dùng nút TẢI VỀ ở trên — bản .exe nhận được cả ba.</p>
+    <p class="web-mo">Khối này nhận được <b>cả ba kiểu máy</b> như bản .exe — OTL 1 kg, OTL 3 kg bản
+      Frecon và OTL bản auto — và dò luôn địa chỉ slave nếu máy đã bị đổi.</p>
 
     <div id="wkhong" class="canh" hidden>
       <h2>TRÌNH DUYỆT NÀY KHÔNG MỞ ĐƯỢC CỔNG COM</h2>
@@ -90,8 +99,15 @@
         PL2303, FTDI…).</span></div>
       <div id="wprog" class="prog" hidden><i id="wthanh"></i></div>
 
+      <div id="whoi" class="hoi" hidden>
+        <h2>CHƯA TÁCH ĐƯỢC LÀ KIỂU MÁY NÀO</h2>
+        <p id="whoi-noi"></p>
+        <div class="hang" id="whoi-nut"></div>
+      </div>
+
       <div id="wket" class="ket" hidden>
         <h2>MÁY RANG ĐÃ TRẢ LỜI</h2>
+        <p class="ket-may" id="wket-may"></p>
         <div class="so-lieu" id="wket-so"></div>
         <p id="wket-chip"></p>
         <div class="xuat">
