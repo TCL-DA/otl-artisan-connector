@@ -1,0 +1,177 @@
+/* OTL Cable Link — áo "teenage engineering" bản ĐỌC ĐƯỢC.
+
+   Giữ nguyên phần làm nên bộ style: 0 px bo góc ở mọi thành phần, không bóng, không gradient, nền gần
+   trắng #F6F8F7, phân vùng bằng NÉT TÓC 1 px chứ không bằng mảng nền, một dải tối đóng vai tủ kính,
+   màu bị phát chẩn — chỉ một điểm màu.
+
+   ⚠ BA CHỖ LỆCH BỘ STYLE, CÓ CHỦ Ý (chủ máy chốt 02/11/2026: "chữ in đậm có viết hoa, rõ nét, cho người
+   50 tuổi vẫn dễ sử dụng"):
+     1. KHÔNG dùng weight 100/13px của bộ style gốc. Thân chữ 17px weight 500; nhãn và nút IN HOA
+        weight 700. Nét tóc ở cỡ đó thì dấu tiếng Việt (ấ ể ữ ộ) biến mất, mà đây là app người đi lắp máy
+        mở lúc đang kẹt ở quán khách, không phải trang catalogue để ngắm.
+     2. Dải tối dùng xám than #2E2B2A chứ không carbon #0F0E12 (luật "bỏ màu đen" của chủ máy, 11/10/2026).
+     3. Giữ ĐỎ OTL cho nút chính và ba màu trạng thái (xong / cảnh báo / lỗi). Bộ style cho phép đúng một
+        điểm màu cho "warning state"; app này báo kết quả máy móc nên cần phân biệt được ba mức.
+   Phần còn lại không thương lượng: cắt thẳng, nét tóc, chữ căn trái, không tô nền để phân vùng. */
+
+:root{
+  --canvas:#F6F8F7;          /* nền trang */
+  --steel:#E5E5E5;           /* nét tóc phân vùng */
+  --graphite:#B2B2B2;        /* nét tóc im hơn + chữ phụ TRÊN DẢI TỐI */
+  --carbon:#2E2B2A;          /* dải tối — xám than, không đen tuyền */
+  --ink:#23262B;             /* chữ chính — đậm, 14,8:1 trên nền canvas */
+  --ink-2:#4A5058;           /* chữ phụ — 7,6:1 */
+  --red:#C8102E;             /* điểm màu duy nhất: nút chính + lỗi */
+  --red-press:#9E0C24;
+  --amber:#B45309;           /* cảnh báo — 5,3:1 trên nền canvas */
+  --ok:#0B6B3A;              /* xong — 6,3:1 */
+  --font:"Segoe UI Variable Display","Segoe UI",-apple-system,"SF Pro Text",system-ui,"Noto Sans",sans-serif;
+  --gap:15px; --gap-l:33px; --gap-xl:66px;
+}
+
+*{ box-sizing:border-box; border-radius:0 !important; }
+html,body{ margin:0; background:var(--canvas); color:var(--ink); }
+body{ font:500 17px/1.5 var(--font); -webkit-font-smoothing:auto; }
+h1,h2,h3{ margin:0; font-weight:700; text-transform:uppercase; letter-spacing:.02em; }
+
+/* ── Dải trên ─────────────────────────────────────────────────────────── */
+.top{ border-bottom:1px solid var(--ink); background:var(--canvas); }
+.top-in{ max-width:1200px; margin:0 auto; padding:18px var(--gap-l); display:flex; align-items:center;
+  gap:var(--gap); flex-wrap:wrap; }
+.top h1{ font-size:26px; }
+.top .sub{ font-size:15px; font-weight:500; color:var(--ink-2); text-transform:none; margin-top:2px; }
+.spacer{ flex:1 1 auto; }
+
+.main{ max-width:1200px; margin:0 auto; padding:var(--gap-l) var(--gap-l) var(--gap-xl); }
+
+/* ── Chọn máy ─────────────────────────────────────────────────────────── */
+.lab{ display:block; font-size:14px; font-weight:700; text-transform:uppercase; letter-spacing:.08em;
+  color:var(--ink-2); margin-bottom:8px; }
+select,.btn{ font:700 17px/1 var(--font); color:var(--ink); background:var(--canvas);
+  border:1px solid var(--ink); padding:14px 18px; text-transform:uppercase; letter-spacing:.04em;
+  cursor:pointer; appearance:none; }
+select{ min-width:320px; padding-right:48px; }
+.chon{ position:relative; display:inline-block; }
+.chon::after{ content:""; position:absolute; right:18px; top:50%; width:10px; height:10px; margin-top:-7px;
+  border-right:2px solid var(--ink); border-bottom:2px solid var(--ink); transform:rotate(45deg);
+  pointer-events:none; }      /* tam giác chỉ xuống: dấu hiệu ô này bấm ra danh sách được */
+select:disabled{ color:var(--ink-3); border-color:var(--graphite); cursor:not-allowed; }
+.chon:has(select:disabled)::after{ border-color:var(--graphite); }
+select:focus-visible,.btn:focus-visible{ outline:3px solid var(--red); outline-offset:2px; }
+.btn:hover{ background:var(--steel); }
+.btn.ghost{ border-color:var(--graphite); color:var(--ink-2); font-weight:500; }
+
+/* ── Nút chính: vật dày duy nhất trên trang ───────────────────────────── */
+/* Nút CHỈ mang tên việc. Trạng thái nằm ở dải báo bên dưới — trước đây nhồi cả hai vào nút nên
+   nhãn vừa là lệnh vừa là thông báo, và lúc xong nút đổi cỡ chữ 40→26 px làm cả trang nhảy. */
+.go{ display:flex; align-items:center; justify-content:center; width:100%; min-height:124px;
+  margin:var(--gap-l) 0 0; padding:24px; border:1px solid var(--red); background:var(--red); color:#fff;
+  font:700 40px/1.05 var(--font); text-transform:uppercase; letter-spacing:.06em; cursor:pointer; }
+.go:hover{ background:var(--red-press); border-color:var(--red-press); }
+.go:disabled{ background:var(--graphite); border-color:var(--graphite); color:var(--canvas); cursor:default; }
+.go.dang{ background:var(--carbon); border-color:var(--carbon); }
+/* Nối xong rồi: dải tối kết quả mới là món hàng, nút lùi về nét tóc — cùng khổ, chỉ đổi tông. */
+.go.lai{ background:var(--canvas); color:var(--ink); border-color:var(--ink); }
+.go.lai:hover{ background:var(--steel); }
+
+/* ── Dải báo: một dòng duy nhất nói đang ở đâu ────────────────────────── */
+.bao{ display:flex; align-items:baseline; gap:var(--gap); padding:14px 0; border-bottom:1px solid var(--steel);
+  font-size:17px; }
+.bao-buoc{ flex:none; font-weight:700; font-size:15px; letter-spacing:.08em; text-transform:uppercase;
+  color:var(--ink); }
+.bao-chu{ color:var(--ink-2); font-variant-numeric:tabular-nums; }
+.bao.loi .bao-chu{ color:var(--red); font-weight:700; }
+.bao.xong .bao-chu{ color:var(--ok); font-weight:700; }
+
+/* ── Thanh tiến trình: một nét tóc dày lên ────────────────────────────── */
+.prog{ height:6px; background:var(--steel); margin-top:2px; }
+.prog > i{ display:block; height:100%; background:var(--carbon); width:0; transition:width .2s linear; }
+
+/* ── Năm bước ─────────────────────────────────────────────────────────── */
+.buoc{ margin-top:var(--gap-xl); border-top:1px solid var(--ink); }
+.row{ display:grid; grid-template-columns:64px 1fr auto; gap:var(--gap); align-items:start;
+  padding:18px 0; border-bottom:1px solid var(--steel); }
+.row .so{ font:700 26px/1.1 var(--font); color:var(--graphite); }
+.row h2{ font-size:22px; }
+.row .ct{ margin-top:4px; max-width:72ch; font-size:17px; font-weight:500; color:var(--ink-2);
+  font-variant-numeric:tabular-nums; }
+.row .tt{ font:700 15px/1.2 var(--font); text-transform:uppercase; letter-spacing:.08em;
+  white-space:nowrap; padding-top:5px; }
+.row[data-tt="dang"] .so{ color:var(--ink); }
+.row[data-tt="dang"] .tt{ color:var(--carbon); }
+.row[data-tt="xong"] .so,.row[data-tt="xong"] .tt{ color:var(--ok); }
+.row[data-tt="canh"] .so,.row[data-tt="canh"] .tt{ color:var(--amber); }
+.row[data-tt="loi"] .so,.row[data-tt="loi"] .tt{ color:var(--red); }
+/* Mờ cả dòng làm chữ tụt dưới ngưỡng đọc được ⇒ đổi MÀU chứ không đổi độ mờ. */
+.row[data-tt="bo"] .so,.row[data-tt="bo"] .tt,.row[data-tt="bo"] h2{ color:var(--ink-3); }
+
+/* ── Dải tối: kết quả, như tủ kính bày món hàng ───────────────────────── */
+.ket{ margin-top:var(--gap-xl); background:var(--carbon); color:var(--canvas); padding:var(--gap-l); }
+.ket h2{ font-size:19px; color:var(--graphite); }
+.ket .so-lieu{ display:flex; flex-wrap:wrap; gap:var(--gap-xl); margin-top:var(--gap); }
+.ket .o{ min-width:120px; }
+.ket .o b{ display:block; font:700 40px/1.1 var(--font); font-variant-numeric:tabular-nums; }
+.ket .o span{ display:block; font-size:14px; font-weight:700; text-transform:uppercase;
+  letter-spacing:.08em; color:var(--graphite); margin-top:4px; }
+.ket p{ margin:var(--gap) 0 0; font-size:17px; }
+
+/* ── Hộp cảnh báo / câu hỏi ───────────────────────────────────────────── */
+.hoi{ margin-top:var(--gap-l); border:2px solid var(--amber); padding:var(--gap-l); }
+.hoi h2{ font-size:19px; color:var(--amber); }
+.hoi p{ margin:10px 0 var(--gap); }
+.hoi .hang{ display:flex; gap:var(--gap); flex-wrap:wrap; }
+
+/* ── Chân trang ───────────────────────────────────────────────────────── */
+.chan{ margin-top:var(--gap-xl); border-top:1px solid var(--ink); padding-top:var(--gap);
+  display:flex; gap:var(--gap-l); flex-wrap:wrap; font-size:15px; color:var(--ink-2); }
+.chan a{ color:var(--ink); font-weight:700; }
+.chan .hang{ display:flex; gap:var(--gap); margin-left:auto; }
+
+@media (max-width:760px){
+  .main,.top-in{ padding-left:var(--gap); padding-right:var(--gap); }
+  .go{ font-size:30px; padding:28px 16px; }
+  .row{ grid-template-columns:44px 1fr; }
+  .row .tt{ grid-column:2; padding-top:0; }
+  .ket .so-lieu{ gap:var(--gap-l); }
+}
+
+/* ── Dấu hiệu nhận: logo công ty ──────────────────────────────────────── */
+.mark{ height:38px; width:auto; display:block; }
+.mark-dao{ height:34px; width:auto; display:block; margin-bottom:var(--gap); }
+
+/* ── Tủ kính cuối trang: ảnh máy rang + thông tin công ty ─────────────── */
+/* Đúng luật bộ style: ảnh chạy SÁT MÉP ô (không đệm, không viền, không bo góc), nền tối thay cho bóng.
+   Ảnh là vật dày duy nhất ở đây nên mọi chữ quanh nó phải nhỏ và im. */
+.vitrine{ background:var(--carbon); color:var(--canvas); margin-top:var(--gap-xl); }
+.vitrine-in{ max-width:1200px; margin:0 auto; display:grid; grid-template-columns:1.25fr 1fr;
+  align-items:stretch; }
+.vitrine-in.khong-anh{ grid-template-columns:1fr; }   /* chưa kèm ảnh máy thì khối chữ chiếm cả dải */
+.vitrine .anh{ margin:0; position:relative; background:#fff; }   /* đảo tông: ô trắng nằm trong dải tối */
+.vitrine .anh img{ display:block; width:100%; height:100%; max-height:420px; object-fit:contain; }
+/* Nhãn nằm TRÊN nền trắng của ô ảnh ⇒ chữ than. Đặt ở MÉP TRÊN: mép dưới là chỗ ô trắng hết và
+   dải tối bắt đầu, chữ than rơi xuống đó thì chìm hẳn (đã thấy lúc soi ảnh chụp). */
+.vitrine .anh figcaption{ position:absolute; left:var(--gap); top:var(--gap); font-size:13px;
+  font-weight:700; letter-spacing:.14em; color:var(--ink); }
+.cty{ padding:var(--gap-l); }
+.cty h2{ font-size:19px; }
+.cty .cty-en{ margin:2px 0 var(--gap); font-size:14px; color:var(--graphite); }
+.cty dl{ margin:0; display:grid; grid-template-columns:132px 1fr; gap:6px var(--gap); font-size:15px; }
+.cty dt{ font-weight:700; font-size:13px; letter-spacing:.08em; color:var(--graphite); padding-top:2px; }
+.cty dd{ margin:0; }
+.cty a{ color:var(--canvas); font-weight:700; }
+.cty .im{ color:var(--graphite); font-weight:500; }
+.cty-chan{ margin-top:var(--gap-l); padding-top:var(--gap); border-top:1px solid var(--graphite);
+  display:flex; justify-content:space-between; font-size:13px; letter-spacing:.08em; font-weight:700; }
+.cty-chan a{ color:var(--canvas); }
+
+@media (max-width:860px){
+  .vitrine-in{ grid-template-columns:1fr; }
+  .vitrine .anh img{ height:260px; }
+  .cty dl{ grid-template-columns:1fr; gap:2px; }
+  .cty dt{ margin-top:10px; }
+}
+
+/* Người dùng bật "giảm chuyển động" trong Windows thì bỏ mọi chuyển động. */
+@media (prefers-reduced-motion: reduce){
+  *{ transition:none !important; animation:none !important; }
+}
