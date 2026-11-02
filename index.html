@@ -24,6 +24,22 @@
 .canh{ border:2px solid var(--amber); padding:var(--gap-l); margin-top:var(--gap-l); }
 .canh h2{ font-size:19px; color:var(--amber); }
 .canh p{ margin:10px 0 0; max-width:72ch; }
+/* ── Khối dò bằng Web Serial ngay trên trang ──────────────────────────── */
+.web{ margin-top:var(--gap-xl); padding-top:var(--gap-l); border-top:1px solid var(--ink); }
+.web-mo{ max-width:72ch; font-size:17px; font-weight:500; color:var(--ink-2); margin:0 0 var(--gap-l); }
+.wgo{ padding:22px 32px; font-size:22px; }
+.ket .xuat{ display:flex; align-items:flex-end; gap:var(--gap); flex-wrap:wrap; margin-top:var(--gap-l);
+  padding-top:var(--gap-l); border-top:1px solid var(--ink-2); }
+.ket .xuat .lab{ color:var(--graphite); }
+.ket .xuat input{ font:700 20px/1 var(--font); letter-spacing:.06em; text-transform:uppercase;
+  color:var(--canvas); background:transparent; border:1px solid var(--graphite); padding:13px 16px;
+  width:140px; font-variant-numeric:tabular-nums; }
+.ket .xuat input:focus-visible,.ket .xuat .btn:focus-visible{ outline:3px solid var(--canvas); outline-offset:2px; }
+.ket .xuat .btn{ color:var(--carbon); background:var(--canvas); border-color:var(--canvas); }
+.ket .xuat .btn:disabled{ color:var(--graphite); background:transparent; border-color:var(--graphite);
+  cursor:not-allowed; }
+.ket .nho{ font-size:15px; color:var(--graphite); max-width:72ch; }
+.web .bao{ border-bottom-color:var(--graphite); }
 @media (max-width:860px){ .doi{ grid-template-columns:1fr; gap:var(--gap-l); } }
 </style>
 </head>
@@ -52,6 +68,42 @@
     <span>TẢI VỀ<small>Windows · 8,4 MB · bản 1.0</small></span>
   </a>
 
+  <section class="web">
+    <span class="lab">HOẶC DÒ NGAY TRÊN TRANG — KHÔNG CẦN TẢI GÌ</span>
+    <p class="web-mo">Chrome và Edge trên máy tính cho phép trang web mở cổng COM. Trang này dò được
+      tốc độ truyền, khung truyền và kiểu Modbus của máy rang, đọc thử BT/ET, rồi xuất tệp <b>.aset</b>
+      cho Artisan. Bốn việc còn lại của bản .exe thì trình duyệt bị cấm làm: cài driver cáp, tự tìm cổng
+      COM, tự mở Artisan, và kiểm lại xem Artisan đã giữ được cổng chưa.</p>
+
+    <div id="wkhong" class="canh" hidden>
+      <h2>TRÌNH DUYỆT NÀY KHÔNG MỞ ĐƯỢC CỔNG COM</h2>
+      <p>Cần Chrome hoặc Edge trên máy tính. Safari và trình duyệt trên điện thoại không có Web Serial —
+      dùng nút TẢI VỀ ở trên.</p>
+    </div>
+
+    <div id="wkhoi">
+      <button id="wgo" type="button" class="btn wgo">CHỌN CỔNG &amp; DÒ</button>
+      <div id="wbao" class="bao" role="status"><span class="bao-chu" id="wbao-chu">Cắm cáp, bật máy
+        rang, rồi bấm nút trên. Chrome sẽ hỏi chọn cổng — chọn cổng mang tên cáp (CH340, CP2102,
+        PL2303, FTDI…).</span></div>
+      <div id="wprog" class="prog" hidden><i id="wthanh"></i></div>
+
+      <div id="wket" class="ket" hidden>
+        <h2>MÁY RANG ĐÃ TRẢ LỜI</h2>
+        <div class="so-lieu" id="wket-so"></div>
+        <p id="wket-chip"></p>
+        <div class="xuat">
+          <div><label class="lab" for="wcom">TÊN CỔNG VỪA CHỌN</label>
+            <input id="wcom" type="text" value="COM3" maxlength="6" spellcheck="false"
+              autocapitalize="characters" autocomplete="off"></div>
+          <button id="wtai" type="button" class="btn" disabled>TẢI TỆP .ASET</button>
+        </div>
+        <p class="nho">Trình duyệt không cho trang web biết cổng tên là gì — tên đó nằm ngay trong hộp
+        thoại bạn vừa bấm (ví dụ &ldquo;COM3 (USB-SERIAL CH340)&rdquo;). Điền đúng vào ô trên rồi tải tệp.
+        Mở tệp .aset bằng cách bấm đúp: Artisan tự nạp thông số.</p>
+      </div>
+    </div>
+  </section>
   <section class="buoc-web">
     <div class="row" data-tt="xong"><div class="so">01</div><div><h2>DÒ DRIVER</h2>
       <div class="ct">Cáp nào Windows chưa chạy được thì cài driver rồi bắt Windows nhận lại — CH340, CH9102, CP210x, PL2303, FTDI.</div></div></div>
@@ -119,5 +171,6 @@
     </div>
   </div>
 </footer>
+<script src="do-web.js"></script>
 </body>
 </html>
