@@ -124,7 +124,7 @@
       <div class="sub">Nối Artisan với máy rang O Tesla bản cắm dây — bấm một nút</div>
     </div>
     <div class="spacer"></div>
-    <span class="lab" style="margin:0">PHIÊN BẢN 1.5</span>
+    <span class="lab" style="margin:0">PHIÊN BẢN 1.6</span>
   </div>
 </header>
 
@@ -162,7 +162,7 @@
         <b>không cài driver được</b> — cài driver cần quyền quản trị của Windows, trình duyệt bị cấm
         chạm vào. Hai cách:</p>
         <p style="margin-top:var(--gap)"><b>Cách nhanh nhất —</b> tải bản phần mềm Windows. Bản
-        1.5 <b>đã kèm sẵn driver</b> cho CH340 / CH9102, CP210x, PL2303 và FTDI: nó tự cài giùm rồi
+        1.6 <b>đã kèm sẵn driver</b> cho CH340 / CH9102, CP210x, PL2303 và FTDI: nó tự cài giùm rồi
         làm luôn cả năm bước, tới lúc Artisan mở ra là đã nối sẵn, bạn chỉ việc rang.</p>
         <p><button type="button" class="btn" id="wdriver-exe">SANG TAB TẢI PHẦN MỀM</button></p>
         <p style="margin-top:var(--gap-l)"><b>Hoặc tự cài —</b> xem trong Device Manager cáp của bạn
@@ -237,34 +237,35 @@
     <p class="dan">Bản Windows làm trọn năm bước bằng <b>một nút</b>: tự cài driver cáp, tự tìm cổng,
       tự dò Modbus, tự mở Artisan và tự kiểm tra lại. Người dùng không phải khai báo gì.</p>
 
-    <a class="tai" href="OTL-Auto-Artisan-Connector-v1.5.zip" download>
-      <span>TẢI VỀ<small>Windows · 12,4 MB · bản 1.5 · đã kèm sẵn driver</small></span>
-    </a>
-
     <section class="canh" id="smart">
-      <h2>LÀM BƯỚC NÀY TRƯỚC, WINDOWS SẼ KHÔNG CHẶN</h2>
+      <h2>ĐỌC TRƯỚC KHI TẢI — WINDOWS SẼ CHẶN NẾU LÀM SAI THỨ TỰ</h2>
       <p>Windows đánh dấu mọi tệp tải từ mạng, và dấu đó lây sang tệp bung ra từ <code>.zip</code> —
-      chính nó làm hiện màn hình cam &ldquo;Windows protected your PC&rdquo;. Bỏ dấu ở tệp
-      <code>.zip</code> <b>trước khi giải nén</b> thì không có màn hình đó:</p>
+      chính nó làm hiện màn hình cam &ldquo;Windows protected your PC&rdquo;. Làm đúng thứ tự này
+      thì <b>không có màn hình đó</b>:</p>
       <ol class="buoc-so">
-        <li>Bấm <b>phải</b> vào tệp <code>.zip</code> vừa tải → <b>Properties</b></li>
-        <li>Cuối thẻ <b>General</b>, tích ô <b>Unblock</b> (bản tiếng Việt: <b>Bỏ chặn</b>) → <b>OK</b></li>
-        <li>Giải nén rồi chạy — xong, không hỏi gì nữa.</li>
+        <li>Tải tệp <code>.zip</code> về. <b>Chưa giải nén vội.</b></li>
+        <li>Bấm <b>phải</b> vào tệp <code>.zip</code> → <b>Properties</b> → cuối thẻ <b>General</b>
+          tích ô <b>Unblock</b> (bản Việt: <b>Bỏ chặn</b>) → <b>OK</b>.</li>
+        <li>Giải nén rồi chạy <code>.exe</code>. Xong, Windows không hỏi gì.</li>
       </ol>
-      <p><b>Lỡ giải nén rồi mới biết?</b> Vẫn chạy được: ở màn hình cam bấm
-      <b>&ldquo;More info&rdquo;</b> (dòng chữ nhỏ bên trái) → rồi bấm <b>&ldquo;Run anyway&rdquo;</b>.
-      Nút &ldquo;Run anyway&rdquo; chỉ hiện ra <i>sau khi</i> bấm &ldquo;More info&rdquo;.</p>
-      <p>Cảnh báo đó <b>không phải báo virus</b>. Nó hiện vì phần mềm chưa mua chữ ký số — Windows
-      làm vậy với mọi phần mềm của nhà sản xuất nhỏ. Muốn kiểm cho chắc:</p>
+      <p><b>Lỡ giải nén trước rồi?</b> Vẫn chạy được: ở màn hình cam bấm <b>&ldquo;More info&rdquo;</b>
+      — dòng chữ nhỏ gạch chân bên trái — <i>rồi</i> nút <b>&ldquo;Run anyway&rdquo;</b> mới hiện ra.
+      Nút đó <b>không</b> có sẵn trên màn hình đầu tiên, nên nhiều người tưởng bị chặn hẳn.</p>
+      <p>Cảnh báo đó <b>không phải báo virus</b>: Microsoft Defender không phát hiện gì ở phần mềm
+      này. Nó hiện vì phần mềm chưa mua chữ ký số — Windows làm vậy với mọi phần mềm của nhà sản
+      xuất nhỏ. Muốn kiểm cho chắc:</p>
       <ul>
         <li>Bấm phải vào <code>.exe</code> → <b>Properties</b> → tab <b>Details</b>: phải thấy
           <b>CONG TY TNHH CONG NGHIEP O TESLA</b> và <b>OTL Auto Artisan Connector</b>.</li>
         <li>So mã kiểm tệp <code>.zip</code> với mã O Tesla công bố:
-          <br><code class="bam" id="sha">E89509445288E90C5B4350A19F953108350C523506225095C1D270A6D0249050</code>
-          <br>Lấy mã tệp mình tải bằng PowerShell:
-          <code>Get-FileHash .\OTL-Auto-Artisan-Connector-v1.5.zip -Algorithm SHA256</code></li>
+          <br><code class="bam" id="sha">BA7A8E4292DCE7884498ECFAC064031D7726C7B2D4F5533C5A0C9C485F1121D9</code>
+          <br>Lấy mã tệp mình tải: <code>Get-FileHash .\OTL-Auto-Artisan-Connector-v1.6.zip -Algorithm SHA256</code></li>
       </ul>
     </section>
+
+    <a class="tai" href="OTL-Auto-Artisan-Connector-v1.6.zip" download>
+      <span>TẢI VỀ<small>Windows · 12,4 MB · bản 1.6 · đã kèm sẵn driver<br>bỏ chặn tệp .zip TRƯỚC khi giải nén (xem trên)</small></span>
+    </a>
 
     <section class="buoc">
       <div class="row" data-tt="xong"><div class="so">01</div><div><h2>DÒ DRIVER</h2>
@@ -310,8 +311,8 @@
     </div>
 
     <section class="canh">
-      <h2>BẢN 1.5 — ĐỌC TRƯỚC KHI DÙNG Ở QUÁN</h2>
-      <p>Bản 1.5 đã <b>kèm sẵn driver</b> cho CH340 / CH9102, CP210x, PL2303 và FTDI — máy chưa
+      <h2>BẢN 1.6 — ĐỌC TRƯỚC KHI DÙNG Ở QUÁN</h2>
+      <p>Bản 1.6 đã <b>kèm sẵn driver</b> cho CH340 / CH9102, CP210x, PL2303 và FTDI — máy chưa
       nhận cáp thì phần mềm tự cài, Windows hỏi quyền thì bấm <b>Có</b>.</p>
       <p><b>Cáp PL2303 nhái</b> thì không phần mềm nào cứu được: driver Prolific đời mới chặn thẳng,
       Windows báo &ldquo;mã 10&rdquo;. Đổi sang cáp CH340 hoặc CP2102.</p>
@@ -339,7 +340,7 @@
         <dt>EMAIL</dt><dd><a href="mailto:otlpro.com@gmail.com">otlpro.com@gmail.com</a></dd>
         <dt>TRANG WEB</dt><dd><a href="https://otlpro.com" target="_blank" rel="noopener">otlpro.com</a></dd>
       </dl>
-      <div class="cty-chan"><span>O TESLA</span><span>v1.5</span></div>
+      <div class="cty-chan"><span>O TESLA</span><span>v1.6</span></div>
     </div>
   </div>
 </footer>

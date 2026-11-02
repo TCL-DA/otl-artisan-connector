@@ -241,14 +241,18 @@ def test_ma_sha256_tren_trang_KHOP_voi_tep_zip_that(trang):
 
 
 def test_trang_noi_ro_cach_qua_man_hinh_SmartScreen(trang):
-    """Phải DẪN BẰNG cách gỡ hẳn (bỏ chặn .zip trước khi giải nén), rồi mới tới cách đi vòng.
-    Đã thử trên Windows thật ngày 02/11/2026 với chính bộ giải nén của Explorer: bỏ chặn tệp .zip
-    trước thì exe bung ra không còn dấu MOTW và SmartScreen không hiện gì."""
+    """Thứ tự phải là: cách DỄ NHẤT trước (bấm tệp .cmd), rồi cách làm tay, cuối cùng mới là đường lui.
+    Chủ máy đã bỏ qua hướng dẫn một lần vì nó nằm DƯỚI nút tải — nên khối này phải nằm TRƯỚC nút tải."""
     pg, _ = trang
     pg.click("#tab-tai")
     chu = pg.inner_text("#smart")
-    assert "Unblock" in chu and "trước khi giải nén" in chu, chu[:200]
-    # cách gỡ hẳn phải đứng TRƯỚC cách đi vòng
-    assert chu.index("Unblock") < chu.index("Run anyway"), "cách đi vòng không được đứng trước"
+    assert "Unblock" in chu, chu[:200]
     assert "More info" in chu and "Run anyway" in chu
-    assert "không phải báo virus" in chu, chu[:200]
+    assert "không phải báo virus" in chu
+    assert chu.index("Unblock") < chu.index("Run anyway"), "đường lui không được đứng trước"
+    # khối cảnh báo phải nằm TRƯỚC nút tải trong trang
+    vt = pg.evaluate("""() => {
+        const a = document.getElementById('smart').compareDocumentPosition(document.querySelector('.tai'));
+        return (a & Node.DOCUMENT_POSITION_FOLLOWING) ? 'truoc' : 'sau';
+    }""")
+    assert vt == "truoc", "khối cảnh báo đang nằm sau nút tải"
