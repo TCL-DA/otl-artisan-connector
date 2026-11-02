@@ -241,8 +241,14 @@ def test_ma_sha256_tren_trang_KHOP_voi_tep_zip_that(trang):
 
 
 def test_trang_noi_ro_cach_qua_man_hinh_SmartScreen(trang):
+    """Phải DẪN BẰNG cách gỡ hẳn (bỏ chặn .zip trước khi giải nén), rồi mới tới cách đi vòng.
+    Đã thử trên Windows thật ngày 02/11/2026 với chính bộ giải nén của Explorer: bỏ chặn tệp .zip
+    trước thì exe bung ra không còn dấu MOTW và SmartScreen không hiện gì."""
     pg, _ = trang
     pg.click("#tab-tai")
     chu = pg.inner_text("#smart")
+    assert "Unblock" in chu and "trước khi giải nén" in chu, chu[:200]
+    # cách gỡ hẳn phải đứng TRƯỚC cách đi vòng
+    assert chu.index("Unblock") < chu.index("Run anyway"), "cách đi vòng không được đứng trước"
     assert "More info" in chu and "Run anyway" in chu
-    assert "chưa mua chữ ký số" in chu, chu[:200]
+    assert "không phải báo virus" in chu, chu[:200]
