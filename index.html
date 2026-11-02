@@ -8,48 +8,99 @@
 <link rel="stylesheet" href="app.css">
 <link rel="icon" type="image/png" href="data:image/png;base64,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">
 <style>
-/* Riêng cho trang tải — app.css lo phần còn lại, nên trang web và app trông cùng một bộ. */
-.tai{ display:inline-flex; align-items:center; gap:var(--gap); margin-top:var(--gap-l); padding:26px 36px;
-  background:var(--red); color:#fff; border:1px solid var(--red); font:700 28px/1 var(--font);
+/* Trang tải + dò — bộ áo dùng chung với app (app.css), đây chỉ là phần riêng của trang web.
+   Thiết kế cho CẢ điện thoại: mọi khối tự co, không khối nào đặt bề rộng cứng. */
+
+/* ── Hai tab ──────────────────────────────────────────────────────────── */
+.tabs{ display:flex; gap:0; border-bottom:1px solid var(--ink); margin-bottom:var(--gap-l); }
+.tabs button{ flex:1 1 0; min-width:0; font:700 clamp(15px,3.6vw,19px)/1.1 var(--font);
+  text-transform:uppercase; letter-spacing:.04em; color:var(--ink-2); background:transparent;
+  border:0; border-bottom:4px solid transparent; padding:16px 10px; cursor:pointer; }
+.tabs button[aria-selected="true"]{ color:var(--ink); border-bottom-color:var(--red); }
+.tabs button:focus-visible{ outline:3px solid var(--red); outline-offset:-3px; }
+.tabs .dau{ display:block; font-size:12px; font-weight:500; letter-spacing:.02em;
+  text-transform:none; color:var(--ink-2); margin-top:3px; }
+
+/* ── Nút chính: một nút, chiếm cả bề ngang, cỡ chữ tự co ───────────────── */
+.go{ width:100%; min-height:clamp(84px,18vw,124px); font-size:clamp(24px,6vw,40px); }
+.tai{ display:flex; width:100%; box-sizing:border-box; align-items:center; justify-content:center;
+  text-align:center; margin-top:0; padding:clamp(18px,5vw,26px) var(--gap);
+  background:var(--red); color:#fff; border:1px solid var(--red);
+  font:700 clamp(24px,6vw,34px)/1.1 var(--font);
   text-transform:uppercase; letter-spacing:.05em; text-decoration:none; }
 .tai:hover{ background:var(--red-press); border-color:var(--red-press); }
-.tai small{ display:block; font-size:14px; font-weight:500; letter-spacing:.02em; text-transform:none;
-  margin-top:6px; opacity:.92; }
-.buoc-web{ margin-top:var(--gap-xl); border-top:1px solid var(--ink); }
-.buoc-web .row{ grid-template-columns:64px 1fr; }
-.doi{ display:grid; grid-template-columns:1fr 1fr; gap:var(--gap-xl); margin-top:var(--gap-xl); }
-.doi h2{ font-size:19px; margin-bottom:10px; }
-.doi li{ margin-bottom:8px; }
-.doi ul{ padding-left:20px; margin:0; }
-.canh{ border:2px solid var(--amber); padding:var(--gap-l); margin-top:var(--gap-l); }
-.canh h2{ font-size:19px; color:var(--amber); }
-.canh p{ margin:10px 0 0; max-width:72ch; }
-/* ── Khối dò bằng Web Serial ngay trên trang ──────────────────────────── */
-.web{ margin-top:var(--gap-xl); padding-top:var(--gap-l); border-top:1px solid var(--ink); }
-.web-mo{ max-width:72ch; font-size:17px; font-weight:500; color:var(--ink-2); margin:0 0 var(--gap-l); }
-.wgo{ padding:22px 32px; font-size:22px; }
-.ket .xuat{ display:flex; align-items:flex-end; gap:var(--gap); flex-wrap:wrap; margin-top:var(--gap-l);
-  padding-top:var(--gap-l); border-top:1px solid var(--ink-2); }
+.tai small{ display:block; font-size:clamp(12px,3.2vw,15px); font-weight:500; letter-spacing:.02em;
+  text-transform:none; margin-top:7px; opacity:.92; }
+
+/* ── Chữ dẫn ──────────────────────────────────────────────────────────── */
+.dan{ max-width:68ch; font-size:clamp(16px,4vw,19px); line-height:1.55; margin:0 0 var(--gap-l); }
+.dan-phu{ max-width:68ch; font-size:clamp(14px,3.6vw,17px); font-weight:500; color:var(--ink-2);
+  line-height:1.55; }
+
+/* ── Năm bước ─────────────────────────────────────────────────────────── */
+.buoc{ margin-top:var(--gap-l); border-top:1px solid var(--ink); }
+.row .so{ font-size:clamp(18px,5vw,26px); }
+.row h2{ font-size:clamp(16px,4.2vw,22px); }
+.row .ct{ font-size:clamp(13px,3.4vw,17px); }
+.row .tt{ font-size:clamp(11px,3vw,15px); }
+/* Mép ngoài không đặt được: trên điện thoại cột trạng thái phải xuống dòng thay vì ép chữ. */
+@media (max-width:560px){
+  .row{ grid-template-columns:36px 1fr; gap:10px; }
+  .row .tt{ grid-column:2; margin-top:2px; }
+}
+
+/* ── Dải kết quả + ô nhập tên cổng ────────────────────────────────────── */
+.ket .ket-may{ margin:6px 0 0; font:700 clamp(18px,5vw,24px)/1.2 var(--font);
+  text-transform:uppercase; letter-spacing:.03em; color:var(--canvas); }
+.ket .so-lieu{ gap:var(--gap-l); }
+.ket .o{ min-width:92px; }
+.ket .o b{ font-size:clamp(24px,7vw,40px); }
+.ket .xuat{ display:flex; align-items:flex-end; gap:var(--gap); flex-wrap:wrap;
+  margin-top:var(--gap-l); padding-top:var(--gap-l); border-top:1px solid var(--ink-2); }
 .ket .xuat .lab{ color:var(--graphite); }
 .ket .xuat input{ font:700 20px/1 var(--font); letter-spacing:.06em; text-transform:uppercase;
-  color:var(--canvas); background:transparent; border:1px solid var(--graphite); padding:13px 16px;
-  width:140px; font-variant-numeric:tabular-nums; }
-.ket .xuat input:focus-visible,.ket .xuat .btn:focus-visible{ outline:3px solid var(--canvas); outline-offset:2px; }
-.ket .xuat .btn{ color:var(--carbon); background:var(--canvas); border-color:var(--canvas); }
+  color:var(--canvas); background:transparent; border:1px solid var(--graphite);
+  padding:13px 16px; width:130px; font-variant-numeric:tabular-nums; }
+.ket .xuat input:focus-visible,.ket .xuat .btn:focus-visible{ outline:3px solid var(--canvas);
+  outline-offset:2px; }
+.ket .xuat .btn{ color:var(--carbon); background:var(--canvas); border-color:var(--canvas); flex:1 1 auto; }
 .ket .xuat .btn:disabled{ color:var(--graphite); background:transparent; border-color:var(--graphite);
   cursor:not-allowed; }
-.ket .nho{ font-size:15px; color:var(--graphite); max-width:72ch; }
-/* Tên máy app nhận ra: thứ đầu tiên thợ cần nhìn thấy, đặt trên dải số. */
-.ket .ket-may{ margin:6px 0 0; font:700 24px/1.2 var(--font); text-transform:uppercase;
-  letter-spacing:.03em; color:var(--canvas); }
-.web .hoi{ margin-top:var(--gap-l); }
-.web .hoi .hang{ display:flex; gap:var(--gap); flex-wrap:wrap; margin-top:var(--gap); }
-.web .hoi .btn{ display:flex; flex-direction:column; align-items:flex-start; gap:4px;
-  text-align:left; min-width:260px; }
-.web .hoi .btn span{ font-size:14px; font-weight:500; letter-spacing:.02em; text-transform:none;
+.ket .nho{ font-size:clamp(13px,3.4vw,15px); color:var(--graphite); max-width:68ch; }
+
+/* ── Bảng hỏi (chọn máy / chọn cổng) ──────────────────────────────────── */
+.hoi .hang{ display:flex; gap:var(--gap); flex-wrap:wrap; margin-top:var(--gap); }
+.hoi .hang .btn{ display:flex; flex-direction:column; align-items:flex-start; gap:4px;
+  text-align:left; flex:1 1 240px; }
+.hoi .hang .btn span{ font-size:14px; font-weight:500; letter-spacing:.02em; text-transform:none;
   color:var(--ink-2); font-variant-numeric:tabular-nums; }
-.web .bao{ border-bottom-color:var(--graphite); }
+
+/* ── Khối hai cột ─────────────────────────────────────────────────────── */
+.doi{ display:grid; grid-template-columns:1fr 1fr; gap:var(--gap-xl); margin-top:var(--gap-xl); }
+.doi h2{ font-size:clamp(16px,4.2vw,19px); margin-bottom:10px; }
+.doi ul{ padding-left:20px; margin:0; }
+.doi li{ margin-bottom:8px; font-size:clamp(14px,3.6vw,17px); }
+.canh{ border:2px solid var(--amber); padding:var(--gap-l); margin-top:var(--gap-l); }
+.canh h2{ font-size:clamp(16px,4.2vw,19px); color:var(--amber); }
+.canh p{ margin:10px 0 0; max-width:68ch; font-size:clamp(14px,3.6vw,17px); }
+
+/* ── Bảng so sánh web / exe ───────────────────────────────────────────── */
+.sosanh{ width:100%; border-collapse:collapse; margin-top:var(--gap); font-size:clamp(13px,3.4vw,16px); }
+.sosanh th,.sosanh td{ text-align:left; padding:9px 10px; border-bottom:1px solid var(--steel);
+  vertical-align:top; }
+.sosanh th{ font-weight:700; text-transform:uppercase; letter-spacing:.06em; font-size:13px;
+  color:var(--ink-2); }
+.sosanh td:nth-child(2),.sosanh td:nth-child(3),
+.sosanh th:nth-child(2),.sosanh th:nth-child(3){ text-align:center; width:4.5em; }
+.co{ color:var(--ok); font-weight:700; }
+.khong{ color:var(--red); font-weight:700; }
+.mot-phan{ color:var(--amber); font-weight:700; }
+
 @media (max-width:860px){ .doi{ grid-template-columns:1fr; gap:var(--gap-l); } }
+@media (max-width:560px){
+  .main{ padding:var(--gap) var(--gap) var(--gap-xl); }
+  .top-in{ padding:14px var(--gap); }
+}
 </style>
 </head>
 <body>
@@ -62,45 +113,42 @@
       <div class="sub">Nối Artisan với máy rang O Tesla bản cắm dây — bấm một nút</div>
     </div>
     <div class="spacer"></div>
-    <span class="lab" style="margin:0">PHIÊN BẢN 1.1 · WINDOWS</span>
+    <span class="lab" style="margin:0">PHIÊN BẢN 1.1</span>
   </div>
 </header>
 
 <main class="main">
-  <p style="max-width:72ch;font-size:19px;line-height:1.5">
-    Cắm cáp từ máy rang vào máy tính, bấm <b>KẾT NỐI</b>, rồi chờ. Phần mềm tự cài driver cho cáp,
-    tự tìm cổng COM, tự dò tốc độ truyền và kiểu Modbus, tự tạo tệp cài đặt rồi mở Artisan lên.
-    Người dùng không phải khai báo gì.
-  </p>
+  <div class="tabs" role="tablist">
+    <button type="button" role="tab" id="tab-do" aria-controls="panel-do" aria-selected="true">
+      DÒ MÁY RANG<span class="dau">chạy ngay trên trang này</span></button>
+    <button type="button" role="tab" id="tab-tai" aria-controls="panel-tai" aria-selected="false">
+      TẢI PHẦN MỀM<span class="dau">bản Windows, đủ năm bước</span></button>
+  </div>
 
-  <a class="tai" href="OTL-Auto-Artisan-Connector-v1.1.zip" download>
-    <span>TẢI VỀ<small>Windows · 9,4 MB · bản 1.1</small></span>
-  </a>
-
-  <section class="web">
-    <span class="lab">HOẶC DÒ NGAY TRÊN TRANG — KHÔNG CẦN TẢI GÌ</span>
-    <p class="web-mo">Chrome và Edge trên máy tính cho phép trang web mở cổng COM. Trang này dò được
-      tốc độ truyền, khung truyền và kiểu Modbus của máy rang, đọc thử BT/ET, rồi xuất tệp <b>.aset</b>
-      cho Artisan. Bốn việc còn lại của bản .exe thì trình duyệt bị cấm làm: cài driver cáp, tự tìm cổng
-      COM, tự mở Artisan, và kiểm lại xem Artisan đã giữ được cổng chưa.</p>
-    <p class="web-mo">Khối này nhận được <b>cả ba kiểu máy</b> như bản .exe — OTL 1 kg, OTL 3 kg bản
-      Frecon và OTL bản auto — và dò luôn địa chỉ slave nếu máy đã bị đổi.</p>
+  <!-- ── Tab 1: dò ngay trên trang ─────────────────────────────────────── -->
+  <section id="panel-do" role="tabpanel" aria-labelledby="tab-do">
+    <p class="dan">Cắm cáp từ máy rang vào máy tính, bật máy rang, rồi bấm <b>BẮT ĐẦU</b>.
+      Trang này tự tìm cáp, tự dò tốc độ truyền và kiểu Modbus, tự nhận ra là máy nào, rồi tạo
+      tệp cài đặt cho Artisan.</p>
 
     <div id="wkhong" class="canh" hidden>
-      <h2>TRÌNH DUYỆT NÀY KHÔNG MỞ ĐƯỢC CỔNG COM</h2>
-      <p>Cần Chrome hoặc Edge trên máy tính. Safari và trình duyệt trên điện thoại không có Web Serial —
-      dùng nút TẢI VỀ ở trên.</p>
+      <h2>MÁY NÀY KHÔNG MỞ ĐƯỢC CỔNG COM</h2>
+      <p>Mở cổng COM từ trang web chỉ chạy được trên <b>Chrome hoặc Edge, trên máy tính</b>.
+      Điện thoại và Safari không có. Sang tab <b>TẢI PHẦN MỀM</b> để lấy bản Windows.</p>
     </div>
 
     <div id="wkhoi">
-      <button id="wgo" type="button" class="btn wgo">CHỌN CỔNG &amp; DÒ</button>
-      <div id="wbao" class="bao" role="status"><span class="bao-chu" id="wbao-chu">Cắm cáp, bật máy
-        rang, rồi bấm nút trên. Chrome sẽ hỏi chọn cổng — chọn cổng mang tên cáp (CH340, CP2102,
-        PL2303, FTDI…).</span></div>
+      <button id="wgo" type="button" class="go">BẮT ĐẦU</button>
+      <div id="wbao" class="bao" role="status">
+        <span class="bao-buoc" id="wbao-buoc" hidden></span>
+        <span class="bao-chu" id="wbao-chu">Cắm cáp, bật máy rang, rồi bấm nút trên.</span>
+      </div>
       <div id="wprog" class="prog" hidden><i id="wthanh"></i></div>
 
+      <div class="buoc" id="wbuoc"></div>
+
       <div id="whoi" class="hoi" hidden>
-        <h2>CHƯA TÁCH ĐƯỢC LÀ KIỂU MÁY NÀO</h2>
+        <h2 id="whoi-tieu">CẦN BẠN CHỌN</h2>
         <p id="whoi-noi"></p>
         <div class="hang" id="whoi-nut"></div>
       </div>
@@ -111,64 +159,96 @@
         <div class="so-lieu" id="wket-so"></div>
         <p id="wket-chip"></p>
         <div class="xuat">
-          <div><label class="lab" for="wcom">TÊN CỔNG VỪA CHỌN</label>
+          <div><label class="lab" for="wcom">TÊN CỔNG</label>
             <input id="wcom" type="text" value="COM3" maxlength="6" spellcheck="false"
               autocapitalize="characters" autocomplete="off"></div>
-          <button id="wtai" type="button" class="btn" disabled>TẢI TỆP .ASET</button>
+          <button id="wtai" type="button" class="btn" disabled>TẢI TỆP CHO ARTISAN</button>
         </div>
-        <p class="nho">Trình duyệt không cho trang web biết cổng tên là gì — tên đó nằm ngay trong hộp
-        thoại bạn vừa bấm (ví dụ &ldquo;COM3 (USB-SERIAL CH340)&rdquo;). Điền đúng vào ô trên rồi tải tệp.
-        Mở tệp .aset bằng cách bấm đúp: Artisan tự nạp thông số.</p>
+        <p class="nho" id="wket-nho">Trình duyệt không cho trang web biết cổng tên là gì — tên đó nằm
+        ngay trong hộp thoại chọn cổng của Chrome (ví dụ &ldquo;COM3 (USB-SERIAL CH340)&rdquo;).
+        Điền đúng rồi bấm tải; lần sau trang tự nhớ.</p>
       </div>
     </div>
-  </section>
-  <section class="buoc-web">
-    <div class="row" data-tt="xong"><div class="so">01</div><div><h2>DÒ DRIVER</h2>
-      <div class="ct">Cáp nào Windows chưa chạy được thì cài driver rồi bắt Windows nhận lại — CH340, CH9102, CP210x, PL2303, FTDI.</div></div></div>
-    <div class="row" data-tt="xong"><div class="so">02</div><div><h2>DÒ CỔNG COM</h2>
-      <div class="ct">Nhận ra cáp theo mã VID:PID, bỏ qua cổng Bluetooth, báo rõ cổng nào đang bị phần mềm khác giữ. Nhiều cổng được dò <b>cùng lúc</b>, nên thêm cáp không làm chờ lâu thêm.</div></div></div>
-    <div class="row" data-tt="xong"><div class="so">03</div><div><h2>DÒ TỐC ĐỘ · MODBUS</h2>
-      <div class="ct">48 tổ hợp: 6 tốc độ × 4 khung truyền × RTU/ASCII, và dò luôn cả địa chỉ slave nếu máy đã bị đổi. Thiết lập xuất xưởng và đường nối lần trước được thử trước nên thường xong trong một hai giây. App <b>tự nhận ra là máy nào</b> — 1 kg, 3 kg hay bản auto — khách không phải chọn.</div></div></div>
-    <div class="row" data-tt="xong"><div class="so">04</div><div><h2>MỞ ARTISAN</h2>
-      <div class="ct">Tạo tệp cài đặt .aset đúng cổng và tốc độ vừa dò, rồi mở Artisan bằng chính tệp đó.</div></div></div>
-    <div class="row" data-tt="xong"><div class="so">05</div><div><h2>KIỂM TRA LẠI</h2>
-      <div class="ct">Chờ tới khi Artisan thật sự giữ cổng COM mới báo xong — không báo bừa.</div></div></div>
+
+    <h2 style="margin-top:var(--gap-xl);font-size:clamp(16px,4.2vw,19px)">TRANG WEB LÀM ĐƯỢC TỚI ĐÂU</h2>
+    <table class="sosanh">
+      <thead><tr><th>Việc</th><th>Web</th><th>.exe</th></tr></thead>
+      <tbody>
+        <tr><td>Tìm cáp đã cắm, nhớ cáp cho lần sau</td>
+          <td class="co">có</td><td class="co">có</td></tr>
+        <tr><td>Cài driver cáp khi Windows chưa nhận</td>
+          <td class="khong">không</td><td class="co">có</td></tr>
+        <tr><td>Dò tốc độ · Modbus · nhận ra là máy nào · dò slave</td>
+          <td class="co">có</td><td class="co">có</td></tr>
+        <tr><td>Tạo tệp cài đặt <code>.aset</code></td>
+          <td class="co">có</td><td class="co">có</td></tr>
+        <tr><td>Mở Artisan lên</td>
+          <td class="mot-phan">bấm đúp</td><td class="co">tự mở</td></tr>
+        <tr><td>Kiểm lại xem Artisan đã nối được chưa</td>
+          <td class="co">có</td><td class="co">có</td></tr>
+      </tbody>
+    </table>
+    <p class="dan-phu" style="margin-top:var(--gap)">Hai chỗ trình duyệt bị cấm, không phần mềm web nào
+      làm được: cài driver (cần quyền quản trị) và tự chạy Artisan. Phần còn lại trang này làm đủ.</p>
   </section>
 
-  <div class="doi">
-    <div>
-      <h2>CẦN GÌ TRƯỚC</h2>
-      <ul>
-        <li>Windows 10 hoặc 11.</li>
-        <li>Đã cài <a href="https://artisan-scope.org" target="_blank" rel="noopener">Artisan</a>.</li>
-        <li>Máy rang đang bật nguồn, cáp đã cắm vào máy tính.</li>
-        <li>Lúc cài driver, Windows hỏi quyền thì bấm <b>Có</b>.</li>
-      </ul>
-    </div>
-    <div>
-      <h2>MÁY HỖ TRỢ</h2>
-      <ul>
-        <li>OTL 3 kg bản Frecon.</li>
-        <li>OTL 1 kg (Artisan đọc thẳng bus RS485).</li>
-        <li>OTL bản AUTO (bo điều khiển CMS).</li>
-        <li>App tự nhận ra máy nào — chỉ khi hai máy cùng cắm, hoặc hai kiểu máy đọc giống hệt nhau,
-        nó mới hỏi bạn chọn.</li>
-      </ul>
-      <h2 style="margin-top:var(--gap-l)">KHÔNG NỐI ĐƯỢC</h2>
-      <ul>
-        <li>Xem dòng chữ đỏ trên màn hình: nó nói kẹt ở khâu nào.</li>
-        <li>Bấm <b>TẢI NHẬT KÝ</b> rồi gửi tệp đó cho O Tesla.</li>
-        <li>Hai lỗi hay gặp: dây RS485 đấu ngược A/B, và cáp chưa cắm chặt.</li>
-      </ul>
-    </div>
-  </div>
+  <!-- ── Tab 2: tải phần mềm ───────────────────────────────────────────── -->
+  <section id="panel-tai" role="tabpanel" aria-labelledby="tab-tai" hidden>
+    <p class="dan">Bản Windows làm trọn năm bước bằng <b>một nút</b>: tự cài driver cáp, tự tìm cổng,
+      tự dò Modbus, tự mở Artisan và tự kiểm tra lại. Người dùng không phải khai báo gì.</p>
 
-  <section class="canh">
-    <h2>BẢN 1.1 — ĐỌC TRƯỚC KHI DÙNG Ở QUÁN</h2>
-    <p>Bản này chưa kèm sẵn bộ driver cáp: máy nào chưa có driver thì phần mềm chỉ nhờ Windows tự tìm trên
-    mạng, có thể không ra. Gặp trường hợp đó, liên hệ O Tesla để lấy bản có kèm driver.</p>
-    <p>Ba kiểu máy đã dựng xong và kiểm bằng bus giả, <b>chưa cắm thử máy rang thật</b>. Lần đầu dùng ở
-    xưởng, nếu có gì lệch thì bấm TẢI NHẬT KÝ và gửi tệp đó cho O Tesla.</p>
+    <a class="tai" href="OTL-Auto-Artisan-Connector-v1.1.zip" download>
+      <span>TẢI VỀ<small>Windows · 9,4 MB · bản 1.1</small></span>
+    </a>
+
+    <section class="buoc">
+      <div class="row" data-tt="xong"><div class="so">01</div><div><h2>DÒ DRIVER</h2>
+        <div class="ct">Cáp nào Windows chưa chạy được thì cài driver rồi bắt Windows nhận lại — CH340, CH9102, CP210x, PL2303, FTDI.</div></div></div>
+      <div class="row" data-tt="xong"><div class="so">02</div><div><h2>DÒ CỔNG COM</h2>
+        <div class="ct">Nhận cáp theo mã VID:PID, bỏ qua cổng Bluetooth, dò nhiều cổng cùng lúc.</div></div></div>
+      <div class="row" data-tt="xong"><div class="so">03</div><div><h2>DÒ TỐC ĐỘ · MODBUS</h2>
+        <div class="ct">48 tổ hợp, dò luôn địa chỉ slave, và tự nhận ra là máy 1 kg, 3 kg hay bản auto.</div></div></div>
+      <div class="row" data-tt="xong"><div class="so">04</div><div><h2>MỞ ARTISAN</h2>
+        <div class="ct">Tạo tệp <code>.aset</code> đúng cổng và tốc độ vừa dò, rồi mở Artisan bằng chính tệp đó.</div></div></div>
+      <div class="row" data-tt="xong"><div class="so">05</div><div><h2>KIỂM TRA LẠI</h2>
+        <div class="ct">Chờ tới khi Artisan thật sự giữ cổng COM mới báo xong — không báo bừa.</div></div></div>
+    </section>
+
+    <div class="doi">
+      <div>
+        <h2>CẦN GÌ TRƯỚC</h2>
+        <ul>
+          <li>Windows 10 hoặc 11.</li>
+          <li>Đã cài <a href="https://artisan-scope.org" target="_blank" rel="noopener">Artisan</a>.</li>
+          <li>Máy rang đang bật nguồn, cáp đã cắm vào máy tính.</li>
+          <li>Lúc cài driver, Windows hỏi quyền thì bấm <b>Có</b>.</li>
+        </ul>
+      </div>
+      <div>
+        <h2>MÁY HỖ TRỢ</h2>
+        <ul>
+          <li>OTL 1 kg (Artisan đọc thẳng bus RS485).</li>
+          <li>OTL 3 kg bản Frecon.</li>
+          <li>OTL bản AUTO (bo điều khiển CMS).</li>
+          <li>App tự nhận ra máy nào — chỉ khi hai máy cùng cắm, hoặc hai kiểu máy đọc giống hệt
+          nhau, nó mới hỏi bạn chọn.</li>
+        </ul>
+        <h2 style="margin-top:var(--gap-l)">KHÔNG NỐI ĐƯỢC</h2>
+        <ul>
+          <li>Xem dòng chữ đỏ trên màn hình: nó nói kẹt ở khâu nào.</li>
+          <li>Bấm <b>TẢI NHẬT KÝ</b> rồi gửi tệp đó cho O Tesla.</li>
+          <li>Hai lỗi hay gặp: dây RS485 đấu ngược A/B, và cáp chưa cắm chặt.</li>
+        </ul>
+      </div>
+    </div>
+
+    <section class="canh">
+      <h2>BẢN 1.1 — ĐỌC TRƯỚC KHI DÙNG Ở QUÁN</h2>
+      <p>Bản này chưa kèm sẵn bộ driver cáp: máy nào chưa có driver thì phần mềm chỉ nhờ Windows tự
+      tìm trên mạng, có thể không ra. Gặp trường hợp đó, liên hệ O Tesla để lấy bản có kèm driver.</p>
+      <p>Ba kiểu máy đã dựng xong và kiểm bằng bus giả, <b>chưa cắm thử máy rang thật</b>. Lần đầu
+      dùng ở xưởng, nếu có gì lệch thì bấm TẢI NHẬT KÝ và gửi tệp đó cho O Tesla.</p>
+    </section>
   </section>
 </main>
 

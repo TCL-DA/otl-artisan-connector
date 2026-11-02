@@ -29,13 +29,40 @@ Yêu cầu: Windows 10/11, đã cài Artisan, máy rang đang bật nguồn.
 
 ## Dò ngay trên trang, không cần tải
 
-Trang tải còn một khối dò chạy bằng **Web Serial API** (Chrome/Edge trên máy tính). Nó làm được
-đúng việc thứ 3 ở trên: mở cổng COM bạn chọn, thử 48 tổ hợp, đọc thử BT/ET, rồi cho tải tệp `.aset`.
+Trang có **hai tab**: *DÒ MÁY RANG* (chạy thẳng trong Chrome/Edge trên máy tính, bằng **Web Serial
+API**) và *TẢI PHẦN MỀM* (bản Windows). Điện thoại và Safari không có Web Serial nên trang tự mở
+sang tab tải.
 
-Bốn việc kia trình duyệt bị cấm làm, nên vẫn phải dùng bản `.exe`:
+Bản web chạy đúng **năm bước** như bản `.exe`, hiện sống từng bước:
 
-| | `.exe` | Trang web |
+| Việc | Web | `.exe` |
 |---|---|---|
+| Tìm cáp đã cắm, **nhớ cáp cho lần sau** | có | có |
+| Cài driver cáp khi Windows chưa nhận | **không** | có |
+| Dò tốc độ · Modbus · nhận ra là máy nào · dò slave | có | có |
+| Tạo tệp cài đặt `.aset` | có | có |
+| Mở Artisan lên | bấm đúp | tự mở |
+| Kiểm lại xem Artisan đã nối được chưa | có | có |
+
+Hai chỗ trình duyệt bị cấm, không phần mềm web nào làm được: **cài driver** (cần quyền quản trị) và
+**tự chạy Artisan**. Phần còn lại trang làm đủ — kể cả bước 5, bằng đúng mẹo của bản `.exe`: thử mở
+cổng COM, mở không được nữa nghĩa là Artisan đang cầm nó.
+
+Hai chỗ khác với bản `.exe`, do trình duyệt:
+
+* **Lần đầu** Chrome hỏi chọn cáp một lần (hộp thoại đã lọc sẵn theo chip CH340 / CP210x / PL2303 /
+  FTDI). Từ lần sau `navigator.serial.getPorts()` nhớ luôn, bấm một nút là chạy.
+* Trình duyệt **không cho trang web biết cổng tên là gì** (`getInfo()` chỉ có VID/PID), nên tệp
+  `.aset` cần bạn điền `COM…` một lần — trang nhớ lại cho lần sau.
+
+Trang web và Artisan **không giữ cùng một cổng COM được**: dò xong hãy để trang yên, mở Artisan.
+
+Mã nguồn: [`do-web.js`](do-web.js). Bài kiểm: `node --test test-do-web.mjs` (25 bài — khung Modbus
+RTU/ASCII, bảng ô ba máy, vá tệp `.aset`) và `python -m pytest test-trang.py -q` (15 bài — mở trang
+bằng Chromium thật, kiểm hai tab, một nút, và bố cục ở cỡ **điện thoại 390 px**: không tràn ngang,
+chữ không dưới 15 px, ô chạm không dưới 40 px). Phần cổng COM thật phải bấm tay.
+
+---|---|---|
 | Tự liệt kê và xếp thứ tự cổng COM | có | không — người dùng tự chọn cổng trong hộp thoại Chrome |
 | Cài driver cáp | có | không bao giờ |
 | Tự mở Artisan với tệp `.aset` | có | không — chỉ tải tệp về, người dùng bấm đúp |

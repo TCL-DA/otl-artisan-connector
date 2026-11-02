@@ -1,28 +1,33 @@
-/* Dò đường nối Modbus NGAY TRONG TRÌNH DUYỆT, bằng Web Serial API (Chrome/Edge trên máy tính, HTTPS).
-   Làm được: mở cổng COM người dùng chọn, thử tốc độ · khung · RTU/ASCII, DÒ RA LÀ MÁY NÀO (1 kg,
-   3 kg hay bản auto), dò luôn địa chỉ slave, đọc BT/ET, rồi xuất tệp .aset đã vá đúng máy.
-   KHÔNG làm được (và không cố làm): cài driver, tự liệt kê cổng, tự mở Artisan, kiểm Artisan giữ cổng
-   — bốn việc đó trình duyệt bị cấm, nên vẫn phải dùng bản .exe. Xem phần giải thích trên trang.
+/* OTL Auto Artisan Connector — bản chạy NGAY TRONG TRÌNH DUYỆT (Web Serial API, Chrome/Edge máy tính).
+
+   Một nút. Năm bước, hiện sống như bản .exe:
+     1 DÒ CÁP          — cổng đã cấp quyền cho trang này (nhớ qua các lần mở); chưa có thì hỏi MỘT lần
+     2 DÒ CỔNG COM     — thử từng cổng đã có quyền
+     3 DÒ TỐC ĐỘ·MODBUS— 48 tổ hợp + dò slave + NHẬN RA LÀ MÁY NÀO
+     4 TẠO TỆP ARTISAN — sinh .aset đúng máy/đường nối, tải về
+     5 KIỂM TRA LẠI    — chờ tới khi Artisan thật sự GIỮ cổng COM mới báo xong
+
+   Hai việc trình duyệt bị cấm, đừng cố: cài driver (cần quyền quản trị) và tự chạy Artisan.
+   Bước 4 vì thế dừng ở "tệp đã tải, bấm đúp"; bước 5 vẫn làm được đủ, bằng đúng mẹo của bản .exe:
+   mở thử cổng, mở KHÔNG được nữa nghĩa là phần mềm khác (Artisan) đang cầm nó.
 
    Bảng ô đọc và cách chấm điểm GIỮ GIỐNG bản .exe (tools/otl_cable_may.py, otl_cable_serial.py).
-   Sửa một bên thì sửa cả bên kia, không thì hai bản nhận ra hai máy khác nhau trên cùng một dây.
+   ⚠ Sửa một bên thì sửa cả bên kia, không thì hai bản nhận ra hai máy khác nhau trên cùng một dây.
 
-   Chữ dựng bằng textContent, không bao giờ bằng innerHTML: tên thiết bị do Windows đặt không được
-   thành thẻ HTML. */
+   Chữ dựng bằng textContent, không bao giờ bằng innerHTML. */
 "use strict";
 
 const $ = (id) => document.getElementById(id);
 
-/* Thứ tự thử: giống bản .exe — xuất xưởng của máy (9600 8N1 RTU) nằm đầu. */
+/* ── Bảng máy (giữ giống bản .exe) ──────────────────────────────────────── */
 const BAUDS = [9600, 19200, 38400, 57600, 115200, 4800];
-const BAUDS_QUET = [9600, 19200, 38400];      // vòng quét slave chỉ ở ba tốc độ O Tesla xuất xưởng
-const FRAMES = [["none", 1], ["even", 1], ["odd", 1], ["none", 2]];   // bytesize luôn 8
+const BAUDS_QUET = [9600, 19200, 38400];
+const FRAMES = [["none", 1], ["even", 1], ["odd", 1], ["none", 2]];
 const MODES = ["rtu", "ascii"];
 const KY_HIEU = { none: "N", even: "E", odd: "O" };
+const NGUOC = { N: "none", E: "even", O: "odd" };
 
-/* Nhiệt độ là số THÔ trong thanh ghi. Hai hệ chia cùng tồn tại:
-     · máy đọc thẳng bus (3 kg, 1 kg): 25 = 25 °C
-     · bo CMS (máy auto): firmware giữ ×10, 1850 = 185,0 °C
+/* Nhiệt độ là số THÔ trong thanh ghi. Máy đọc thẳng bus: 25 = 25 °C. Bo CMS: ×10, 1850 = 185,0 °C.
    Hai khoảng phải RỜI NHAU ở đầu trên mới phân biệt được hệ chia. */
 const TEMP_OK = [-20, 700];
 const TEMP_X10 = [-200, 7000];
@@ -70,10 +75,33 @@ const CHIPS = {
   "0403:6001": "FTDI", "0403:6010": "FTDI", "0403:6011": "FTDI", "0403:6014": "FTDI",
   "0403:6015": "FTDI",
 };
-const COMPORT_RE = /^COM\d{1,3}$/;
-const DEM_TOI_DA = 4096;      // thiết bị nói liên tục thì chặn ở đây, đừng để đệm phình vô hạn
+/* Lọc hộp thoại chọn cổng của Chrome về đúng các chip máy rang hay dùng — khách đỡ phải đoán. */
+const LOC = [...new Set(Object.keys(CHIPS).map((k) => k.split(":")[0]))]
+  .map((v) => ({ usbVendorId: parseInt(v, 16) }));
 
-let cong = null, dangChay = false, dungLai = false, ketQua = null;
+const COMPORT_RE = /^COM\d{1,3}$/;
+const DEM_TOI_DA = 4096;
+const NHO = "otl-artisan-connector";        // khoá localStorage
+
+const BUOC = [
+  ["cap", "DÒ CÁP", "Tìm cáp USB–RS485 đã cắm vào máy tính"],
+  ["cong", "DÒ CỔNG COM", "Thử từng cổng đã được cấp quyền"],
+  ["duong", "DÒ TỐC ĐỘ · MODBUS", "Thử tốc độ và kiểu khung cho tới khi máy trả lời, rồi nhận ra là máy nào"],
+  ["aset", "TẠO TỆP CHO ARTISAN", "Sinh tệp .aset đúng máy và đúng đường nối vừa dò"],
+  ["kiem", "KIỂM TRA LẠI", "Chờ tới khi Artisan thật sự giữ cổng COM"],
+];
+
+let cong = null, dangChay = false, dungLai = false, ketQua = null, dangCho = false;
+const tt = {};        // trạng thái từng bước
+
+/* ── Nhớ giữa các lần mở trang ──────────────────────────────────────────── */
+function docNho() {
+  try { return JSON.parse(localStorage.getItem(NHO) || "{}") || {}; } catch (e) { return {}; }
+}
+
+function ghiNho(them) {
+  try { localStorage.setItem(NHO, JSON.stringify(Object.assign(docNho(), them))); } catch (e) { /* chế độ ẩn danh */ }
+}
 
 /* ── Khung Modbus, viết tay (hàm 3, đọc một ô) ──────────────────────────── */
 function crc16(b) {
@@ -96,9 +124,8 @@ function khungAscii(slave, reg) {
   return new TextEncoder().encode(":" + hex + "\r\n");
 }
 
-/* Trả về số đọc được, hoặc null nếu khung sai / CRC-LRC sai / không đủ byte.
-   Dò khung ở MỌI vị trí, không chỉ ở byte đầu: dây RS485 hay sinh một byte rác lúc đổi chiều, và
-   bắt đúng byte đầu mới chịu đọc thì mất khung tốt nằm ngay sau nó. */
+/* Dò khung ở MỌI vị trí: dây RS485 hay sinh một byte rác lúc đổi chiều, bắt đúng byte đầu mới chịu
+   đọc thì mất khung tốt nằm ngay sau nó. */
 function doKhungRtu(b, slave) {
   for (let i = 0; i + 7 <= b.length; i++) {
     if (b[i] !== slave || b[i + 1] !== 3 || b[i + 2] !== 2) continue;
@@ -124,9 +151,7 @@ function doKhungAscii(b, slave) {
 
 function soCoDau(hi, lo) { const v = (hi << 8) | lo; return v >= 0x8000 ? v - 0x10000 : v; }
 
-/* ── Đọc cổng: MỘT reader cho cả lần mở cổng ────────────────────────────────
-   Không gọi reader.cancel() để hết giờ: cancel đóng luôn luồng đọc, lần sau không đọc được nữa.
-   Nên vòng đọc chạy nền dồn byte vào đệm, chỗ chờ chỉ ngó đệm. */
+/* ── Đọc cổng: MỘT reader cho cả lần mở cổng ────────────────────────────── */
 function moDem(c) {
   const st = { dem: [], reader: c.readable.getReader() };
   st.vong = (async () => {
@@ -150,10 +175,9 @@ async function dongDem(st) {
 
 function nghi(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
-/* Thời gian chờ ĐẦY ĐỦ, tính theo tốc độ truyền — như bản .exe. */
 function hanDay(soByte, baud) { return Math.min(1200, Math.round((soByte * 2 * 11 * 1000) / baud) + 220); }
-/* Thời gian chờ NGẮN cho ô mở đầu của vòng quét sâu: chỉ cần biết "có ai trên đường này không".
-   Hằng bù 220 ms nhân với 48 tổ hợp chiếm gần hết thời gian chờ; thiết bị thật đáp trong vài ms. */
+/* Nhịp ngắn cho ô mở đầu của vòng quét sâu: hằng bù 220 ms nhân 48 tổ hợp chiếm gần hết thời gian chờ,
+   mà thiết bị thật đáp trong vài ms. */
 function hanNgan(soByte, baud) { return Math.min(500, Math.round((soByte * 2 * 11 * 1000) / baud) + 60); }
 
 async function choByte(st, soByte, han) {
@@ -162,13 +186,12 @@ async function choByte(st, soByte, han) {
   return new Uint8Array(st.dem.splice(0, st.dem.length));
 }
 
-/* ── Đọc một ô ───────────────────────────────────────────────────────────── */
-async function docO(st, slave, reg, mode, baud, han, lap) {
+async function docO(st, c, slave, reg, mode, han, lap) {
   const khung = mode === "rtu" ? khungRtu(slave, reg) : khungAscii(slave, reg);
   const soByte = mode === "rtu" ? 7 : 17;
   for (let i = 0; i < Math.max(1, lap); i++) {
     st.dem.length = 0;
-    const w = cong.writable.getWriter();
+    const w = c.writable.getWriter();
     try { await w.write(khung); } finally { w.releaseLock(); }
     const tl = await choByte(st, soByte, han);
     const gt = mode === "rtu" ? doKhungRtu(tl, slave) : doKhungAscii(tl, slave);
@@ -178,27 +201,22 @@ async function docO(st, slave, reg, mode, baud, han, lap) {
   return { gt: null, dau: null };
 }
 
-/* Ô mở đầu: nhịp ngắn trước, và chỉ chờ lại bằng nhịp đầy đủ khi ĐÁNG chờ — byte đầu đúng bằng địa chỉ
-   slave vừa gọi, tức đang là khung trả lời dở. Chờ lại mỗi khi nghe thấy byte bất kỳ thì trên dây RS485
-   hở (chưa có máy, chưa có điện trở đầu cuối) nhiễu làm lưới an toàn kích ở MỌI lần thử, gấp đôi thời
-   gian chờ đúng ở trường hợp hay gặp nhất. */
-async function docMoDau(st, slave, reg, mode, baud, ngan, lap) {
+/* Ô mở đầu: nhịp ngắn trước, chỉ chờ lại bằng nhịp đầy đủ khi ĐÁNG chờ — byte đầu đúng bằng địa chỉ
+   slave vừa gọi. Chờ lại mỗi khi nghe thấy byte bất kỳ thì dây RS485 hở (nhiễu) làm lưới an toàn kích
+   ở MỌI lần thử, gấp đôi thời gian chờ đúng ở trường hợp hay gặp nhất. */
+async function docMoDau(st, c, slave, reg, mode, baud, ngan, lap) {
   const soByte = mode === "rtu" ? 7 : 17;
-  if (!ngan) return (await docO(st, slave, reg, mode, baud, hanDay(soByte, baud), lap)).gt;
-  const r = await docO(st, slave, reg, mode, baud, hanNgan(soByte, baud), 1);
+  if (!ngan) return (await docO(st, c, slave, reg, mode, hanDay(soByte, baud), lap)).gt;
+  const r = await docO(st, c, slave, reg, mode, hanNgan(soByte, baud), 1);
   if (r.gt !== null) return r.gt;
   const mong = mode === "ascii" ? ":".charCodeAt(0) : slave;
   if (r.dau !== mong) return null;
-  return (await docO(st, slave, reg, mode, baud, hanDay(soByte, baud), 1)).gt;
+  return (await docO(st, c, slave, reg, mode, hanDay(soByte, baud), 1)).gt;
 }
 
 /* ── Nhận ra là máy nào ──────────────────────────────────────────────────── */
 function trongKhoang(v, k) { return v >= k[0] && v <= k[1]; }
 
-/* Các slave cần thử cho một ô:
-     · theoSlave: ô này nằm trên CÙNG thiết bị với ô kia (bo CMS đăng cả dải ô trên một slave);
-     · quet: dò lần lượt, bỏ slave đã thuộc về ô mà khacSlave trỏ tới (BT và ET của máy đọc thẳng bus
-       là hai thiết bị khác nhau, cùng số ô — không bỏ thì ET nhận đúng slave của BT). */
 function slaveCanThu(p, daTim) {
   if (p.theoSlave) return daTim[p.theoSlave] !== undefined ? [daTim[p.theoSlave]] : [p.slave];
   const ds = p.quet || [p.slave];
@@ -207,36 +225,34 @@ function slaveCanThu(p, daTim) {
   return loc.length ? loc : ds;
 }
 
-async function thuMotMay(st, may, mode, baud, lap) {
+async function thuMotMay(st, c, may, mode, baud, lap) {
   const doc = {}, slave = {};
   let coTraLoi = false, imCot = false;
   for (const p of may.probe) {
     let gt = null;
     for (const sl of slaveCanThu(p, slave)) {
       const soByte = mode === "rtu" ? 7 : 17;
-      const r = await docO(st, sl, p.reg, mode, baud, hanDay(soByte, baud), p.cot ? lap : 1);
+      const r = await docO(st, c, sl, p.reg, mode, hanDay(soByte, baud), p.cot ? lap : 1);
       if (r.dau !== null) coTraLoi = true;
       if (r.gt === null) continue;
       coTraLoi = true;
       if (trongKhoang(r.gt, p.range)) { gt = r.gt; slave[p.ten] = sl; break; }
-      if (gt === null) gt = r.gt;         // có số nhưng lạc khoảng — giữ để báo "cần xem"
+      if (gt === null) gt = r.gt;
     }
     if (gt === null) { if (p.cot) imCot = true; continue; }
     doc[p.ten] = gt;
   }
   if (!coTraLoi) return null;
   const cot = may.probe.filter((p) => p.cot);
-  const chac = !imCot && cot.every((p) => doc[p.ten] !== undefined
-    && trongKhoang(doc[p.ten], p.range) && slave[p.ten] !== undefined);
-  // Điểm = số ô đọc được ĐÚNG KHOẢNG, kể cả ô phụ. Dùng để tách hai kiểu máy có cùng ô BT/ET:
-  // máy 1 kg và máy 3 kg chỉ khác nhau ở ô biến tần, bỏ qua điểm là nhận nhầm máy này thành máy kia.
-  const diem = may.probe.filter((p) => doc[p.ten] !== undefined
-    && trongKhoang(doc[p.ten], p.range) && slave[p.ten] !== undefined).length;
-  return { chac, doc, slave, diem };
+  const dung = (p) => doc[p.ten] !== undefined && trongKhoang(doc[p.ten], p.range)
+    && slave[p.ten] !== undefined;
+  // Điểm = số ô đọc đúng khoảng, KỂ CẢ ô phụ: máy 1 kg và 3 kg có BT/ET trùng hệt, chỉ tách được
+  // bằng ô biến tần. Bỏ qua điểm là nhận nhầm máy này thành máy kia.
+  return { chac: !imCot && cot.every(dung), doc, slave, diem: may.probe.filter(dung).length };
 }
 
 /* Các (slave, ô) cần hỏi để biết "đường này có ai trả lời không" — một ô cốt lõi mỗi máy, BỎ TRÙNG.
-   Máy 3 kg và máy 1 kg đều mở đầu bằng (slave 1, ô 4096); không bỏ trùng là chờ thừa một nhịp. */
+   Máy 3 kg và máy 1 kg đều mở đầu bằng (slave 1, ô 4096). */
 function oMoDau(quetSlave) {
   const ra = [];
   for (const id of THU_TU) {
@@ -248,19 +264,18 @@ function oMoDau(quetSlave) {
   return ra;
 }
 
-/* ── Thử một tổ hợp ────────────────────────────────────────────────────────── */
-async function thuToHop(baud, parity, stopBits, mode, { ngan = false, quetSlave = false, lap = 1 } = {}) {
-  await cong.open({ baudRate: baud, dataBits: 8, parity, stopBits, bufferSize: 512, flowControl: "none" });
-  // Hạ DTR/RTS: board nào tự nạp lại khi DTR lên cao thì sẽ không bị reset giữa lúc dò.
-  try { await cong.setSignals({ dataTerminalReady: false, requestToSend: false }); } catch (e) { /* cáp không hỗ trợ */ }
-  const st = moDem(cong);
+async function thuToHop(c, baud, parity, stopBits, mode, { ngan = false, quetSlave = false, lap = 1 } = {}) {
+  await c.open({ baudRate: baud, dataBits: 8, parity, stopBits, bufferSize: 512, flowControl: "none" });
+  // Hạ DTR/RTS: bo kiểu Arduino/ESP32 hiểu DTR lên cao là lệnh khởi động lại.
+  try { await c.setSignals({ dataTerminalReady: false, requestToSend: false }); } catch (e) { /* cáp không hỗ trợ */ }
+  const st = moDem(c);
   try {
-    await nghi(60);                     // để bus im một nhịp trước khi gửi khung đầu
+    await nghi(60);
     let ngheThay = false;
     for (const [sl, reg] of oMoDau(quetSlave)) {
       const gt = quetSlave
-        ? (await docO(st, sl, reg, mode, baud, hanNgan(mode === "rtu" ? 7 : 17, baud), lap)).gt
-        : await docMoDau(st, sl, reg, mode, baud, ngan, lap);
+        ? (await docO(st, c, sl, reg, mode, hanNgan(mode === "rtu" ? 7 : 17, baud), lap)).gt
+        : await docMoDau(st, c, sl, reg, mode, baud, ngan, lap);
       if (gt !== null) { ngheThay = true; break; }
     }
     if (!ngheThay) return null;
@@ -268,177 +283,158 @@ async function thuToHop(baud, parity, stopBits, mode, { ngan = false, quetSlave 
     const chacDs = [];
     let ganDung = null;
     for (const id of THU_TU) {
-      const r = await thuMotMay(st, MAY[id], mode, baud, lap);
+      const r = await thuMotMay(st, c, MAY[id], mode, baud, lap);
       if (!r) continue;
       Object.assign(r, chung, { mayId: id });
-      if (r.chac) chacDs.push(r);
-      else if (!ganDung) ganDung = r;
+      if (r.chac) chacDs.push(r); else if (!ganDung) ganDung = r;
     }
     if (!chacDs.length) return ganDung;
     const cao = Math.max(...chacDs.map((x) => x.diem));
     const top = chacDs.filter((x) => x.diem === cao);
-    // Hoà điểm thật: chỉ đọc được BT/ET, không ô nào tách được hai kiểu máy. KHÔNG đoán — hai kiểu máy
-    // dùng hai tệp .aset khác nhau, đoán sai là khách nhận sai bảng ô đọc.
+    // Hoà điểm: chỉ đọc được BT/ET, không ô nào tách được hai kiểu máy ⇒ KHÔNG đoán, hỏi người dùng.
     if (top.length > 1) return Object.assign({}, top[0], { moHo: top });
     return top[0];
   } finally {
     await dongDem(st);
-    try { await cong.close(); } catch (e) { /* đã đóng */ }
+    try { await c.close(); } catch (e) { /* đã đóng */ }
   }
 }
 
-/* ── Chuỗi dò ──────────────────────────────────────────────────────────────── */
-function bao(chu, loai) {
-  $("wbao").className = "bao" + (loai ? " " + loai : "");
-  $("wbao-chu").textContent = chu;
+/* ── Vẽ trang ───────────────────────────────────────────────────────────── */
+function el(tag, cls, chu) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (chu !== undefined) e.textContent = chu;
+  return e;
 }
 
-function tenChip() {
-  const i = cong && cong.getInfo ? cong.getInfo() : {};
+const NHAN_TT = { cho: "CHỜ", dang: "ĐANG CHẠY", xong: "XONG", canh: "CẦN XEM", loi: "LỖI", bo: "BỎ QUA" };
+
+function veBuoc() {
+  const k = $("wbuoc");
+  k.textContent = "";
+  BUOC.forEach(([ma, ten, mota], i) => {
+    const b = tt[ma] || {};
+    const row = el("div", "row");
+    row.dataset.tt = b.tt || "cho";
+    row.appendChild(el("div", "so", String(i + 1).padStart(2, "0")));
+    const giua = el("div");
+    giua.appendChild(el("h2", null, ten));
+    giua.appendChild(el("div", "ct", b.ct || mota));
+    row.appendChild(giua);
+    row.appendChild(el("div", "tt", NHAN_TT[b.tt || "cho"]));
+    k.appendChild(row);
+  });
+}
+
+function dat(ma, trangThai, chiTiet) {
+  tt[ma] = { tt: trangThai, ct: chiTiet };
+  veBuoc();
+}
+
+/* Một chỗ duy nhất viết lên dải báo — để không có hai chỗ tranh nhau nói. */
+function bao(chu, buoc, loai) {
+  const b = $("wbao-buoc");
+  b.hidden = !buoc;
+  if (buoc) b.textContent = buoc;
+  $("wbao-chu").textContent = chu;
+  $("wbao").className = "bao" + (loai ? " " + loai : "");
+}
+
+function tenChip(c) {
+  const i = c && c.getInfo ? c.getInfo() : {};
   if (i.usbVendorId === undefined) return "cổng trên bo mạch chủ (không qua USB)";
   const ma = i.usbVendorId.toString(16).padStart(4, "0") + ":" + i.usbProductId.toString(16).padStart(4, "0");
   return CHIPS[ma] ? CHIPS[ma] + " · " + ma : "chip lạ · " + ma;
 }
 
-async function doHet() {
-  const tong = BAUDS.length * FRAMES.length * MODES.length + BAUDS_QUET.length;
-  let i = 0;
-  const buoc = async (baud, parity, stopBits, mode, opt, nhan) => {
-    i++;
-    $("wthanh").style.width = Math.round((i / tong) * 100) + "%";
-    bao(`${nhan} ${baud} bps · 8${KY_HIEU[parity]}${stopBits} · ${mode.toUpperCase()} — ${i}/${tong}`);
-    return thuToHop(baud, parity, stopBits, mode, opt);
-  };
-  let ganDung = null;
-  // Vòng 1 — thiết lập xuất xưởng, hỏi lại 2 lần mỗi ô.
-  for (const mode of MODES) {
-    for (const baud of [9600]) {
-      for (const [parity, stopBits] of [["none", 1]]) {
-        if (dungLai) return null;
-        const r = await buoc(baud, parity, stopBits, mode, { lap: 2 }, "Đang thử");
-        if (r && r.chac) return r;
-        if (r && !ganDung) ganDung = r;
-      }
-    }
-  }
-  // Vòng 2 — quét đủ 48 tổ hợp, ô mở đầu dùng nhịp chờ ngắn.
-  for (const mode of MODES) {
-    for (const baud of BAUDS) {
-      for (const [parity, stopBits] of FRAMES) {
-        if (dungLai) return null;
-        if (mode === "rtu" && baud === 9600 && parity === "none" && stopBits === 1) continue;
-        if (mode === "ascii" && baud === 9600 && parity === "none" && stopBits === 1) continue;
-        const r = await buoc(baud, parity, stopBits, mode, { ngan: true }, "Đang thử");
-        if (r && r.chac) return r;
-        if (r && !ganDung) ganDung = r;
-      }
-    }
-  }
-  if (ganDung) return ganDung;
-  // Vòng 3 — quét slave: máy đã bị đổi slave id từ HMI.
-  for (const baud of BAUDS_QUET) {
-    if (dungLai) return null;
-    const r = await buoc(baud, "none", 1, "rtu", { quetSlave: true }, "Đang dò địa chỉ máy ở");
-    if (r && r.chac) return r;
-    if (r && !ganDung) ganDung = r;
-  }
-  return ganDung;
-}
-
-function veKetQua(kq) {
-  const so = $("wket-so");
-  so.textContent = "";
-  const o = (nhan, gt) => {
-    const d = document.createElement("div"); d.className = "o";
-    const b = document.createElement("b"); b.textContent = String(gt);
-    const s = document.createElement("span"); s.textContent = nhan;
-    d.appendChild(b); d.appendChild(s); so.appendChild(d);
-  };
-  o("TỐC ĐỘ", kq.baud);
-  o("KHUNG", "8" + kq.parity + kq.stopbits);
-  o("KIỂU", kq.mode.toUpperCase());
-  for (const ten of Object.keys(kq.doc)) o(ten, kq.doc[ten]);
-  $("wket-may").textContent = MAY[kq.mayId].ten;
-  const sl = Object.keys(kq.slave || {}).map((k) => `${k} slave ${kq.slave[k]}`).join(" · ");
-  $("wket-chip").textContent = "Cáp: " + tenChip() + (sl ? " — " + sl : "");
-  $("wket").hidden = false;
-}
-
-/* Chưa tách được kiểu máy: KHÔNG chọn hộ. Hai kiểu máy dùng hai tệp .aset khác nhau. */
-function veChonMay(ds) {
+function hoi(tieu, noi, ds) {
+  $("whoi-tieu").textContent = tieu;
+  $("whoi-noi").textContent = noi;
   const nut = $("whoi-nut");
   nut.textContent = "";
-  $("whoi-noi").textContent = "Máy trả lời đúng nhưng chưa tách được là kiểu máy nào — hai kiểu này "
-    + "đọc nhiệt độ ở cùng một chỗ, chỉ khác nhau ở phần biến tần mà biến tần đang không chạy. "
-    + "Chọn đúng máy của bạn.";
   ds.forEach((m) => {
-    const b = document.createElement("button");
-    b.type = "button"; b.className = "btn";
-    const t = document.createElement("b"); t.textContent = MAY[m.mayId].ten;
-    const s = document.createElement("span");
-    s.textContent = Object.keys(m.doc).map((k) => `${k} ${m.doc[k]}`).join(" · ");
-    b.appendChild(t); b.appendChild(s);
-    b.onclick = () => {
-      $("whoi").hidden = true;
-      ketQua = m;
-      veKetQua(m);
-      $("wtai").disabled = false;
-      bao(`Đã chọn ${MAY[m.mayId].ten}. Điền tên cổng rồi tải tệp .aset.`, "xong");
-    };
+    const b = el("button", "btn");
+    b.type = "button";
+    b.appendChild(el("b", null, m.ten));
+    if (m.phu) b.appendChild(el("span", null, m.phu));
+    b.onclick = () => { $("whoi").hidden = true; m.chon(); };
     nut.appendChild(b);
   });
   $("whoi").hidden = false;
 }
 
-async function chay() {
-  if (dangChay) { dungLai = true; bao("Đang dừng…"); return; }
-  dungLai = false; ketQua = null;
-  $("wket").hidden = true; $("whoi").hidden = true; $("wtai").disabled = true;
-  try {
-    cong = await navigator.serial.requestPort();
-  } catch (e) {
-    bao("Chưa chọn cổng nào.");                       // người dùng bấm Huỷ trong hộp thoại Chrome
-    return;
-  }
-  dangChay = true;
-  $("wgo").textContent = "DỪNG";
-  $("wgo").classList.add("dang");
-  $("wprog").hidden = false;
-  try {
-    const r = await doHet();
-    if (r && r.moHo) {
-      veChonMay(r.moHo);
-      bao("Máy đã trả lời — còn một bước: chọn đúng kiểu máy bên dưới.");
-    } else if (r && r.chac) {
-      ketQua = r;
-      veKetQua(r);
-      bao(`Nhận ra ${MAY[r.mayId].ten} ở ${r.baud} bps · 8${r.parity}${r.stopbits} · `
-        + r.mode.toUpperCase() + ".", "xong");
-      $("wtai").disabled = false;
-    } else if (r) {
-      bao(`Có thiết bị trả lời ở ${r.baud} bps nhưng số đọc không giống máy rang O Tesla nào. `
-        + "Kiểm lại xem có đúng cổng của máy rang không.", "loi");
-    } else if (dungLai) {
-      bao("Đã dừng.");
-    } else {
-      bao("Không máy nào trả lời trên cổng này. Kiểm cáp RS485 (hai dây A/B có thể đang đấu ngược), "
-        + "máy rang đã bật nguồn chưa, và có đúng là cổng này không.", "loi");
+/* ── Bước 1–2: tìm cáp ──────────────────────────────────────────────────── */
+/* Trình duyệt KHÔNG cho liệt kê cổng. Nhưng cổng nào đã được cấp quyền một lần thì getPorts() trả về
+   mãi mãi — nên từ lần thứ hai trở đi khách không phải bấm chọn gì nữa. Đó là chỗ "thông minh" duy
+   nhất có thật ở đây; đừng hứa hơn. */
+async function timCap() {
+  dat("cap", "dang", "Đang xem có cáp nào đã cấp quyền cho trang này chưa");
+  let ds = await navigator.serial.getPorts();
+  if (!ds.length) {
+    dat("cap", "dang", "Lần đầu dùng: Chrome sẽ hỏi bạn chọn cáp — chọn một lần, lần sau tự nhớ");
+    bao("Chrome đang hỏi chọn cáp — chọn cổng mang tên cáp (CH340, CP2102, PL2303, FTDI…).", "BƯỚC 1/5");
+    try {
+      await navigator.serial.requestPort({ filters: LOC });
+    } catch (e) {
+      // Lọc theo chip mà không thấy gì thì mở rộng ra mọi cổng: có xưởng dùng cáp lạ.
+      try { await navigator.serial.requestPort(); } catch (e2) { return []; }
     }
-  } catch (e) {
-    bao("Không mở được cổng: " + e.message + ". Artisan hoặc phần mềm khác đang giữ cổng này thì "
-      + "đóng nó rồi dò lại.", "loi");
-  } finally {
-    dangChay = false;
-    $("wgo").textContent = "CHỌN CỔNG & DÒ LẠI";
-    $("wgo").classList.remove("dang");
-    $("wprog").hidden = true;
-    $("wthanh").style.width = "0";
+    ds = await navigator.serial.getPorts();
   }
+  if (!ds.length) {
+    dat("cap", "loi", "Chưa chọn cáp nào");
+    return [];
+  }
+  dat("cap", "xong", ds.length === 1 ? "Có 1 cáp: " + tenChip(ds[0])
+    : "Có " + ds.length + " cáp đã cấp quyền");
+  return ds;
 }
 
-/* ── Xuất tệp .aset ────────────────────────────────────────────────────────── */
-/* Đặt một khoá trong ĐÚNG một mục của tệp .aset (kiểu INI của Qt). Hai mục [SerialPort] và [Modbus]
-   đều có khoá comport/baudrate — sửa sai mục là Artisan nối bằng thông số cũ. */
+/* ── Bước 3: dò đường + nhận máy ────────────────────────────────────────── */
+async function doMotCong(c, baoTien) {
+  const nho = docNho();
+  const uu = [];
+  if (nho.link) uu.push([nho.link.baud, NGUOC[nho.link.parity] || "none", nho.link.stopbits, nho.link.mode]);
+  uu.push([9600, "none", 1, "rtu"], [9600, "none", 1, "ascii"]);
+  let ganDung = null;
+  const thu = async (baud, parity, stopBits, mode, opt) => {
+    if (dungLai) return null;
+    baoTien(baud, parity, stopBits, mode);
+    try { return await thuToHop(c, baud, parity, stopBits, mode, opt); } catch (e) {
+      try { await c.close(); } catch (e2) { /* đã đóng */ }
+      if (e && (e.name === "InvalidStateError" || /open|access|busy|denied/i.test(String(e.message)))) throw e;
+      return null;
+    }
+  };
+  // Vòng 1 — đường nối lần trước + thiết lập xuất xưởng, hỏi lại 2 lần mỗi ô.
+  for (const [b, p, s, m] of uu) {
+    const r = await thu(b, p, s, m, { lap: 2 });
+    if (r && (r.chac || r.moHo)) return r;
+    if (r && !ganDung) ganDung = r;
+  }
+  // Vòng 2 — quét đủ 48 tổ hợp, ô mở đầu dùng nhịp chờ ngắn.
+  for (const mode of MODES) {
+    for (const baud of BAUDS) {
+      for (const [parity, stopBits] of FRAMES) {
+        if (uu.some(([b, p, s, m]) => b === baud && p === parity && s === stopBits && m === mode)) continue;
+        const r = await thu(baud, parity, stopBits, mode, { ngan: true });
+        if (r && (r.chac || r.moHo)) return r;
+        if (r && !ganDung) ganDung = r;
+      }
+    }
+  }
+  if (ganDung) return ganDung;
+  // Vòng 3 — quét slave: máy đã bị đổi địa chỉ từ HMI.
+  for (const baud of BAUDS_QUET) {
+    const r = await thu(baud, "none", 1, "rtu", { quetSlave: true });
+    if (r && (r.chac || r.moHo)) return r;
+    if (r && !ganDung) ganDung = r;
+  }
+  return ganDung;
+}
+
+/* ── Bước 4: tệp .aset ──────────────────────────────────────────────────── */
 function datKhoa(dong, muc, khoa, gt) {
   let d = -1, c = -1;
   for (let i = 0; i < dong.length; i++) {
@@ -454,7 +450,6 @@ function datKhoa(dong, muc, khoa, gt) {
   dong.splice(c, 0, khoa + "=" + gt);
 }
 
-/* [(số thứ tự input, ô nhớ)] theo đúng thứ tự ghi trong mục [Modbus]. */
 function oVao(dong) {
   const ra = [];
   let d = -1, c = dong.length;
@@ -501,7 +496,7 @@ async function taiAset() {
   const ten = ($("wcom").value || "").trim().toUpperCase();
   if (!COMPORT_RE.test(ten)) {
     bao("Tên cổng phải là chữ COM kèm số, ví dụ COM3. Tên đó nằm ngay trong hộp thoại chọn cổng của "
-      + "Chrome, hoặc trong Device Manager của Windows.", "loi");
+      + "Chrome, hoặc trong Device Manager của Windows.", "BƯỚC 4/5", "loi");
     $("wcom").focus();
     return;
   }
@@ -512,11 +507,12 @@ async function taiAset() {
     if (!r.ok) throw new Error("HTTP " + r.status);
     mau = await r.text();
   } catch (e) {
-    bao("Không tải được tệp mẫu .aset: " + e.message, "loi");
+    dat("aset", "loi", "Không tải được tệp mẫu: " + e.message);
+    bao("Không tải được tệp mẫu .aset: " + e.message, "BƯỚC 4/5", "loi");
     return;
   }
   const dong = mau.split(/\r?\n/);
-  datKhoa(dong, "Modbus", "type", ketQua.mode === "ascii" ? 1 : 0);   // 0 = Serial RTU · 1 = Serial ASCII
+  datKhoa(dong, "Modbus", "type", ketQua.mode === "ascii" ? 1 : 0);   // 0 = Serial RTU · 1 = ASCII
   datKhoa(dong, "Modbus", "comport", ten);
   datKhoa(dong, "Modbus", "baudrate", ketQua.baud);
   datKhoa(dong, "Modbus", "bytesize", 8);
@@ -526,19 +522,190 @@ async function taiAset() {
   const blob = new Blob([dong.join("\r\n") + "\r\n"], { type: "application/octet-stream" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "OTL-" + may.template + "-" + ten + "-" + ketQua.baud + "-" + ketQua.mode + ".aset";
+  a.download = "OTL-" + may.template + "-" + ten + ".aset";
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 10000);
-  bao("Đã tải tệp .aset cho " + may.ten + ". Bấm đúp vào tệp đó — Artisan tự mở và nhận đúng thông số. "
-    + "Đóng trang này trước đã: trang web và Artisan không giữ cùng một cổng COM được.", "xong");
+  ghiNho({ com: ten, link: { baud: ketQua.baud, parity: ketQua.parity, stopbits: ketQua.stopbits, mode: ketQua.mode } });
+  dat("aset", "xong", "Đã tải tệp " + a.download);
+  choArtisan();
 }
 
-/* ── Khởi động ─────────────────────────────────────────────────────────────── */
+/* ── Bước 5: chờ Artisan GIỮ cổng ───────────────────────────────────────── */
+/* Mẹo giống bản .exe: không đọc hộ nhiệt độ (làm thế là giành cổng của Artisan). Chỉ thử MỞ cổng —
+   mở không được nữa nghĩa là phần mềm khác đang cầm nó, mà lúc này phần mềm đó là Artisan. */
+async function choArtisan() {
+  if (dangCho) return;
+  dangCho = true;
+  dat("kiem", "dang", "Bấm đúp vào tệp vừa tải — Artisan sẽ mở. Trang này đang chờ…");
+  bao("Bấm đúp vào tệp .aset vừa tải. Artisan mở ra là xong — trang tự nhận ra, không cần làm gì thêm.",
+    "BƯỚC 5/5");
+  const het = Date.now() + 180000;            // chờ tối đa 3 phút rồi thôi, đừng quay mãi
+  while (Date.now() < het && dangCho) {
+    await nghi(2000);
+    let moDuoc = false;
+    try {
+      await cong.open({ baudRate: 9600, dataBits: 8, parity: "none", stopBits: 1 });
+      moDuoc = true;
+      await cong.close();
+    } catch (e) { moDuoc = false; }
+    if (!moDuoc) {
+      dangCho = false;
+      dat("kiem", "xong", "Artisan đang giữ cổng — đã nối xong");
+      bao("Xong. Artisan đang đọc máy rang — bạn không cần làm gì thêm.", null, "xong");
+      return;
+    }
+  }
+  if (dangCho) {
+    dangCho = false;
+    dat("kiem", "canh", "Chưa thấy Artisan cầm cổng. Mở tệp .aset rồi thử lại.");
+    bao("Chưa thấy Artisan giữ cổng. Bấm đúp tệp .aset vừa tải; nếu Artisan đã mở sẵn thì đóng rồi "
+      + "mở lại bằng chính tệp đó.", null, "loi");
+  }
+}
+
+/* ── Chuỗi chính — một nút ──────────────────────────────────────────────── */
+function xongDo(r, c) {
+  ketQua = r;
+  cong = c;
+  const may = MAY[r.mayId];
+  dat("duong", "xong", may.ten + " · " + r.baud + " bps · 8" + r.parity + r.stopbits + " · "
+    + r.mode.toUpperCase());
+  const so = $("wket-so");
+  so.textContent = "";
+  const o = (nhan, gt) => {
+    const d = el("div", "o");
+    d.appendChild(el("b", null, String(gt)));
+    d.appendChild(el("span", null, nhan));
+    so.appendChild(d);
+  };
+  o("TỐC ĐỘ", r.baud);
+  o("KHUNG", "8" + r.parity + r.stopbits);
+  o("KIỂU", r.mode.toUpperCase());
+  for (const ten of Object.keys(r.doc)) o(ten, r.doc[ten]);
+  $("wket-may").textContent = may.ten;
+  const sl = Object.keys(r.slave || {}).map((k) => k + " slave " + r.slave[k]).join(" · ");
+  $("wket-chip").textContent = "Cáp: " + tenChip(c) + (sl ? " — " + sl : "");
+  $("wket").hidden = false;
+  $("wtai").disabled = false;
+  const nho = docNho();
+  if (nho.com && COMPORT_RE.test(nho.com)) $("wcom").value = nho.com;
+  dat("aset", "dang", "Điền tên cổng rồi bấm TẢI TỆP CHO ARTISAN");
+  bao("Nhận ra " + may.ten + ". Còn một việc: điền tên cổng rồi tải tệp cho Artisan.", "BƯỚC 4/5", "xong");
+}
+
+async function chay() {
+  if (dangChay) { dungLai = true; dangCho = false; bao("Đang dừng…"); return; }
+  dungLai = false; ketQua = null; dangCho = false;
+  for (const [ma] of BUOC) delete tt[ma];
+  veBuoc();
+  $("wket").hidden = true; $("whoi").hidden = true; $("wtai").disabled = true;
+  dangChay = true;
+  $("wgo").textContent = "DỪNG";
+  $("wgo").classList.add("dang");
+  $("wprog").hidden = false;
+  try {
+    const ds = await timCap();
+    if (!ds.length) {
+      bao("Chưa chọn cáp nào. Bấm BẮT ĐẦU rồi chọn cổng mang tên cáp trong hộp thoại của Chrome.",
+        null, "loi");
+      return;
+    }
+    dat("cong", "dang", "Đang thử " + ds.length + " cổng");
+    const tong = ds.length * (MODES.length * BAUDS.length * FRAMES.length + BAUDS_QUET.length + 2);
+    let i = 0;
+    let ganDung = null, loiMo = null;
+    for (let k = 0; k < ds.length; k++) {
+      if (dungLai) break;
+      const c = ds[k];
+      const baoTien = (baud, parity, stopBits, mode) => {
+        i++;
+        $("wthanh").style.width = Math.round((i / tong) * 100) + "%";
+        bao("Cổng " + (k + 1) + "/" + ds.length + " · " + baud + " bps · 8" + KY_HIEU[parity] + stopBits
+          + " · " + mode.toUpperCase(), "BƯỚC 3/5");
+        dat("duong", "dang", "Đang thử " + baud + " bps · 8" + KY_HIEU[parity] + stopBits + " · "
+          + mode.toUpperCase());
+      };
+      let r = null;
+      try { r = await doMotCong(c, baoTien); } catch (e) { loiMo = e; continue; }
+      if (r && r.moHo) {
+        dat("cong", "xong", "Cáp: " + tenChip(c));
+        dat("duong", "canh", "Máy trả lời đúng nhưng chưa tách được là kiểu máy nào");
+        bao("Máy đã trả lời — còn một bước: chọn đúng kiểu máy bên dưới.", "BƯỚC 3/5");
+        hoi("CHƯA TÁCH ĐƯỢC LÀ KIỂU MÁY NÀO",
+          "Hai kiểu máy này đọc nhiệt độ ở cùng một chỗ, chỉ khác nhau ở phần biến tần mà biến tần "
+          + "đang không chạy. Chọn đúng máy của bạn.",
+          r.moHo.map((m) => ({
+            ten: MAY[m.mayId].ten,
+            phu: Object.keys(m.doc).map((kk) => kk + " " + m.doc[kk]).join(" · "),
+            chon: () => xongDo(m, c),
+          })));
+        return;
+      }
+      if (r && r.chac) {
+        dat("cong", "xong", "Cáp: " + tenChip(c));
+        xongDo(r, c);
+        return;
+      }
+      if (r && !ganDung) { ganDung = r; ganDung._cong = c; }
+    }
+    if (dungLai) { bao("Đã dừng."); return; }
+    if (ganDung) {
+      dat("cong", "xong", "Cáp: " + tenChip(ganDung._cong));
+      dat("duong", "canh", "Có thiết bị trả lời ở " + ganDung.baud + " bps nhưng số đọc không giống máy rang");
+      bao("Có thiết bị trả lời ở " + ganDung.baud + " bps nhưng số đọc không giống máy rang O Tesla "
+        + "nào. Kiểm lại xem có đúng cổng của máy rang không.", "BƯỚC 3/5", "loi");
+      return;
+    }
+    if (loiMo) {
+      dat("duong", "loi", "Không mở được cổng: " + loiMo.message);
+      bao("Không mở được cổng: " + loiMo.message + ". Artisan hoặc phần mềm khác đang giữ cổng này "
+        + "thì đóng nó rồi dò lại.", "BƯỚC 3/5", "loi");
+      return;
+    }
+    dat("duong", "loi", "Không máy nào trả lời");
+    bao("Không máy nào trả lời. Kiểm cáp RS485 (hai dây A/B có thể đang đấu ngược), máy rang đã bật "
+      + "nguồn chưa, và có đúng là cổng này không.", null, "loi");
+  } catch (e) {
+    bao("Lỗi: " + e.message, null, "loi");
+  } finally {
+    dangChay = false;
+    $("wgo").textContent = "DÒ LẠI";
+    $("wgo").classList.remove("dang");
+    $("wgo").classList.add("lai");
+    $("wprog").hidden = true;
+    $("wthanh").style.width = "0";
+  }
+}
+
+/* ── Hai tab ────────────────────────────────────────────────────────────── */
+function doiTab(id) {
+  for (const [t, p] of [["tab-do", "panel-do"], ["tab-tai", "panel-tai"]]) {
+    const chon = t === id;
+    $(t).setAttribute("aria-selected", String(chon));
+    $(p).hidden = !chon;
+  }
+  try { location.hash = id === "tab-tai" ? "#tai" : "#do"; } catch (e) { /* trình duyệt chặn */ }
+}
+
+/* ── Khởi động ──────────────────────────────────────────────────────────── */
+veBuoc();
+$("tab-do").onclick = () => doiTab("tab-do");
+$("tab-tai").onclick = () => doiTab("tab-tai");
+
 if (!("serial" in navigator)) {
+  // Điện thoại và Safari không có Web Serial ⇒ mở thẳng tab tải, đừng bắt khách bấm nút không chạy.
   $("wkhong").hidden = false;
   $("wkhoi").hidden = true;
+  doiTab("tab-tai");
 } else {
   $("wgo").onclick = chay;
   $("wtai").onclick = taiAset;
-  $("wcom").addEventListener("input", () => { $("wtai").disabled = !ketQua; });
+  const nho = docNho();
+  if (nho.com && COMPORT_RE.test(nho.com)) $("wcom").value = nho.com;
+  navigator.serial.getPorts().then((ds) => {
+    if (ds.length) {
+      bao("Đã nhớ " + ds.length + " cáp từ lần trước — bấm BẮT ĐẦU là chạy ngay, không phải chọn lại.");
+    }
+  }).catch(() => { /* không hỏi được thì thôi */ });
+  doiTab(location.hash === "#tai" ? "tab-tai" : "tab-do");
 }
