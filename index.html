@@ -83,6 +83,11 @@
 .canh{ border:2px solid var(--amber); padding:var(--gap-l); margin-top:var(--gap-l); }
 .canh h2{ font-size:clamp(16px,4.2vw,19px); color:var(--amber); }
 .canh p{ margin:10px 0 0; max-width:68ch; font-size:clamp(14px,3.6vw,17px); }
+.canh ul{ margin:10px 0 0; padding-left:20px; max-width:68ch; }
+.canh li{ margin-bottom:8px; font-size:clamp(14px,3.6vw,17px); }
+.canh a{ color:var(--ink); font-weight:700; }
+.sosanh small{ display:block; font-weight:500; text-transform:none; letter-spacing:0;
+  color:var(--ink-2); font-size:12px; margin-top:2px; }
 
 /* ── Bảng so sánh web / exe ───────────────────────────────────────────── */
 .sosanh{ width:100%; border-collapse:collapse; margin-top:var(--gap); font-size:clamp(13px,3.4vw,16px); }
@@ -113,7 +118,7 @@
       <div class="sub">Nối Artisan với máy rang O Tesla bản cắm dây — bấm một nút</div>
     </div>
     <div class="spacer"></div>
-    <span class="lab" style="margin:0">PHIÊN BẢN 1.1</span>
+    <span class="lab" style="margin:0">PHIÊN BẢN 1.2</span>
   </div>
 </header>
 
@@ -144,6 +149,34 @@
         <span class="bao-chu" id="wbao-chu">Cắm cáp, bật máy rang, rồi bấm nút trên.</span>
       </div>
       <div id="wprog" class="prog" hidden><i id="wthanh"></i></div>
+
+      <div id="wdriver" class="canh" hidden>
+        <h2>WINDOWS CHƯA NHẬN CÁP — THIẾU DRIVER</h2>
+        <p>Không có cổng COM nào hiện ra, nghĩa là Windows chưa nhận cáp USB–RS485. Trang web
+        <b>không cài driver được</b> — cài driver cần quyền quản trị của Windows, trình duyệt bị cấm
+        chạm vào. Hai cách:</p>
+        <p style="margin-top:var(--gap)"><b>Cách nhanh nhất —</b> tải bản phần mềm Windows. Bản
+        1.2 <b>đã kèm sẵn driver</b> cho CH340 / CH9102, CP210x, PL2303 và FTDI: nó tự cài giùm rồi
+        làm luôn cả năm bước, tới lúc Artisan mở ra là đã nối sẵn, bạn chỉ việc rang.</p>
+        <p><button type="button" class="btn" id="wdriver-exe">SANG TAB TẢI PHẦN MỀM</button></p>
+        <p style="margin-top:var(--gap-l)"><b>Hoặc tự cài —</b> xem trong Device Manager cáp của bạn
+        là chip gì, rồi tải đúng bộ bên dưới từ trang của hãng, giải nén và chạy:</p>
+        <ul>
+          <li><b>CH340 / CH341 / CH9102</b> —
+            <a href="https://www.wch-ic.com/downloads/CH341SER_EXE.html" target="_blank" rel="noopener">wch-ic.com</a>
+            (cáp rẻ hay dùng nhất)</li>
+          <li><b>CP2102 / CP2105</b> —
+            <a href="https://www.silabs.com/developer-tools/usb-to-uart-bridge-vcp-drivers" target="_blank" rel="noopener">silabs.com</a></li>
+          <li><b>PL2303</b> —
+            <a href="https://www.prolific.com.tw/US/ShowProduct.aspx?p_id=225&amp;pcid=41" target="_blank" rel="noopener">prolific.com.tw</a></li>
+          <li><b>FT232 / FT2232</b> —
+            <a href="https://ftdichip.com/drivers/vcp-drivers/" target="_blank" rel="noopener">ftdichip.com</a></li>
+        </ul>
+        <p>Chỉ tải từ đúng bốn trang hãng ở trên, đừng tải từ trang tải hộ — driver là phần mềm chạy
+        ở mức nhân Windows.</p>
+        <p><b>Cáp PL2303 mà Windows báo &ldquo;mã 10&rdquo;:</b> đó là chip nhái, driver Prolific đời
+        mới chặn thẳng. Phải dùng bản driver cũ 3.3.2.102, hoặc đổi sang cáp CH340 / CP2102.</p>
+      </div>
 
       <div class="buoc" id="wbuoc"></div>
 
@@ -177,7 +210,8 @@
         <tr><td>Tìm cáp đã cắm, nhớ cáp cho lần sau</td>
           <td class="co">có</td><td class="co">có</td></tr>
         <tr><td>Cài driver cáp khi Windows chưa nhận</td>
-          <td class="khong">không</td><td class="co">có</td></tr>
+          <td class="khong">không<br><small>chỉ chỗ tải</small></td>
+          <td class="co">tự cài<br><small>kèm sẵn 4 bộ</small></td></tr>
         <tr><td>Dò tốc độ · Modbus · nhận ra là máy nào · dò slave</td>
           <td class="co">có</td><td class="co">có</td></tr>
         <tr><td>Tạo tệp cài đặt <code>.aset</code></td>
@@ -197,8 +231,8 @@
     <p class="dan">Bản Windows làm trọn năm bước bằng <b>một nút</b>: tự cài driver cáp, tự tìm cổng,
       tự dò Modbus, tự mở Artisan và tự kiểm tra lại. Người dùng không phải khai báo gì.</p>
 
-    <a class="tai" href="OTL-Auto-Artisan-Connector-v1.1.zip" download>
-      <span>TẢI VỀ<small>Windows · 9,4 MB · bản 1.1</small></span>
+    <a class="tai" href="OTL-Auto-Artisan-Connector-v1.2.zip" download>
+      <span>TẢI VỀ<small>Windows · 12,4 MB · bản 1.2 · đã kèm sẵn driver</small></span>
     </a>
 
     <section class="buoc">
@@ -243,11 +277,13 @@
     </div>
 
     <section class="canh">
-      <h2>BẢN 1.1 — ĐỌC TRƯỚC KHI DÙNG Ở QUÁN</h2>
-      <p>Bản này chưa kèm sẵn bộ driver cáp: máy nào chưa có driver thì phần mềm chỉ nhờ Windows tự
-      tìm trên mạng, có thể không ra. Gặp trường hợp đó, liên hệ O Tesla để lấy bản có kèm driver.</p>
-      <p>Ba kiểu máy đã dựng xong và kiểm bằng bus giả, <b>chưa cắm thử máy rang thật</b>. Lần đầu
-      dùng ở xưởng, nếu có gì lệch thì bấm TẢI NHẬT KÝ và gửi tệp đó cho O Tesla.</p>
+      <h2>BẢN 1.2 — ĐỌC TRƯỚC KHI DÙNG Ở QUÁN</h2>
+      <p>Bản 1.2 đã <b>kèm sẵn driver</b> cho CH340 / CH9102, CP210x, PL2303 và FTDI — máy chưa
+      nhận cáp thì phần mềm tự cài, Windows hỏi quyền thì bấm <b>Có</b>.</p>
+      <p><b>Cáp PL2303 nhái</b> thì không phần mềm nào cứu được: driver Prolific đời mới chặn thẳng,
+      Windows báo &ldquo;mã 10&rdquo;. Đổi sang cáp CH340 hoặc CP2102.</p>
+      <p>Ba kiểu máy đã kiểm bằng bus giả; máy bản auto đã chạy thử trên phần cứng thật.
+      Lần đầu dùng ở xưởng, nếu có gì lệch thì bấm TẢI NHẬT KÝ và gửi tệp đó cho O Tesla.</p>
     </section>
   </section>
 </main>
@@ -270,7 +306,7 @@
         <dt>EMAIL</dt><dd><a href="mailto:otlpro.com@gmail.com">otlpro.com@gmail.com</a></dd>
         <dt>TRANG WEB</dt><dd><a href="https://otlpro.com" target="_blank" rel="noopener">otlpro.com</a></dd>
       </dl>
-      <div class="cty-chan"><span>O TESLA</span><span>v1.1</span></div>
+      <div class="cty-chan"><span>O TESLA</span><span>v1.2</span></div>
     </div>
   </div>
 </footer>

@@ -179,3 +179,47 @@ def test_may_tinh_khong_bi_tran_ngang(trang):
     pg, _ = trang
     rong = pg.evaluate("[document.documentElement.scrollWidth, window.innerWidth]")
     assert rong[0] <= rong[1] + 1, rong
+
+
+# ── Thiếu driver: trang phải CHỈ CHỖ, không được bỏ mặc ─────────────────────
+def test_khoi_driver_an_luc_binh_thuong(trang):
+    pg, _ = trang
+    assert pg.locator("#wdriver").is_hidden()
+
+
+def test_khoi_driver_noi_THANG_la_web_khong_cai_duoc(trang):
+    """Không được hứa web cài driver: cần quyền quản trị, trình duyệt bị cấm. Nói thẳng mới đúng."""
+    pg, _ = trang
+    chu = pg.evaluate("document.getElementById('wdriver').innerText")
+    assert "không cài driver được" in chu.lower() or "không cài được driver" in chu.lower(), chu[:200]
+
+
+def test_khoi_driver_co_du_bon_trang_hang(trang):
+    """Chỉ bốn trang hãng — driver chạy ở mức nhân Windows, không được dẫn khách ra trang tải hộ."""
+    pg, _ = trang
+    links = pg.eval_on_selector_all("#wdriver a", "a => a.map(x => x.href)")
+    for hang in ("wch-ic.com", "silabs.com", "prolific.com.tw", "ftdichip.com"):
+        assert any(hang in h for h in links), (hang, links)
+    assert all(h.startswith("https://") for h in links), links
+
+
+def test_khoi_driver_hien_ra_khi_khong_thay_cong_nao(trang):
+    """Dựng cảnh "không có cáp nào": trang phải bật khối driver chứ không im lặng."""
+    pg, loi = trang
+    if not pg.evaluate("'serial' in navigator"):
+        pytest.skip("Chromium này không có Web Serial")
+    pg.evaluate("""() => {
+        navigator.serial.getPorts = async () => [];
+        navigator.serial.requestPort = async () => { throw new DOMException('no device', 'NotFoundError'); };
+    }""")
+    pg.click("#wgo")
+    pg.wait_for_selector("#wdriver:not([hidden])", timeout=15000)
+    assert "driver" in pg.inner_text("#wbao-chu").lower()
+    assert loi == []
+
+
+def test_nut_trong_khoi_driver_dua_sang_tab_tai(trang):
+    pg, _ = trang
+    pg.evaluate("document.getElementById('wdriver').hidden = false")
+    pg.click("#wdriver-exe")
+    assert pg.locator("#panel-tai").is_visible()

@@ -38,11 +38,14 @@ Bản web chạy đúng **năm bước** như bản `.exe`, hiện sống từng
 | Việc | Web | `.exe` |
 |---|---|---|
 | Tìm cáp đã cắm, **nhớ cáp cho lần sau** | có | có |
-| Cài driver cáp khi Windows chưa nhận | **không** | có |
+| Cài driver cáp khi Windows chưa nhận | **không** — chỉ chỗ tải | **tự cài, kèm sẵn 4 bộ** |
 | Dò tốc độ · Modbus · nhận ra là máy nào · dò slave | có | có |
 | Tạo tệp cài đặt `.aset` | có | có |
 | Mở Artisan lên | bấm đúp | tự mở |
 | Kiểm lại xem Artisan đã nối được chưa | có | có |
+
+Bản `.exe` 1.2 **kèm sẵn driver** CH340 / CH9102, CP210x, PL2303, FTDI — không tải gì từ internet,
+chỉ nạp những gì nằm trong `drivers\` cạnh exe bằng `pnputil /add-driver … /install`.
 
 Hai chỗ trình duyệt bị cấm, không phần mềm web nào làm được: **cài driver** (cần quyền quản trị) và
 **tự chạy Artisan**. Phần còn lại trang làm đủ — kể cả bước 5, bằng đúng mẹo của bản `.exe`: thử mở

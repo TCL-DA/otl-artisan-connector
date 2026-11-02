@@ -378,14 +378,21 @@ async function timCap() {
       await navigator.serial.requestPort({ filters: LOC });
     } catch (e) {
       // Lọc theo chip mà không thấy gì thì mở rộng ra mọi cổng: có xưởng dùng cáp lạ.
-      try { await navigator.serial.requestPort(); } catch (e2) { return []; }
+      // ⚠ Hỏng cả hai lần thì KHÔNG được thoát sớm ở đây — phải rơi xuống nhánh "không thấy cổng nào"
+      //   bên dưới, chỗ bật hướng dẫn driver. Thoát sớm là bỏ mặc khách với một dòng chữ cụt.
+      try { await navigator.serial.requestPort(); } catch (e2) { /* rơi xuống dưới */ }
     }
-    ds = await navigator.serial.getPorts();
+    try { ds = await navigator.serial.getPorts(); } catch (e) { ds = []; }
   }
   if (!ds.length) {
-    dat("cap", "loi", "Chưa chọn cáp nào");
+    // Hộp thoại Chrome rỗng (hoặc khách bấm Huỷ vì chẳng có gì để chọn) gần như luôn là một việc:
+    // Windows chưa nhận cáp, tức thiếu driver. Trang KHÔNG cài được driver — nói thẳng và chỉ chỗ.
+    dat("cap", "loi", "Không thấy cổng COM nào — Windows có thể chưa nhận cáp (thiếu driver)");
+    $("wdriver").hidden = false;
+    $("wdriver").scrollIntoView({ block: "nearest" });
     return [];
   }
+  $("wdriver").hidden = true;
   dat("cap", "xong", ds.length === 1 ? "Có 1 cáp: " + tenChip(ds[0])
     : "Có " + ds.length + " cáp đã cấp quyền");
   return ds;
@@ -589,8 +596,17 @@ function xongDo(r, c) {
   $("wtai").disabled = false;
   const nho = docNho();
   if (nho.com && COMPORT_RE.test(nho.com)) $("wcom").value = nho.com;
+  // Đã biết tên cổng từ lần trước ⇒ TỰ tải tệp luôn. Trình duyệt không cho trang web biết cổng tên
+  // là gì (getInfo() chỉ có VID/PID), nên lần ĐẦU vẫn phải hỏi một lần; từ lần sau thì không.
+  if (nho.com && COMPORT_RE.test(nho.com)) {
+    dat("aset", "dang", "Đang tạo tệp cho Artisan (" + nho.com + ", nhớ từ lần trước)");
+    bao("Nhận ra " + may.ten + " — đang tạo tệp cho Artisan…", "BƯỚC 4/5", "xong");
+    taiAset();
+    return;
+  }
   dat("aset", "dang", "Điền tên cổng rồi bấm TẢI TỆP CHO ARTISAN");
-  bao("Nhận ra " + may.ten + ". Còn một việc: điền tên cổng rồi tải tệp cho Artisan.", "BƯỚC 4/5", "xong");
+  bao("Nhận ra " + may.ten + ". Còn một việc: điền tên cổng — lần đầu thôi, lần sau trang tự nhớ.",
+    "BƯỚC 4/5", "xong");
 }
 
 async function chay() {
@@ -606,8 +622,8 @@ async function chay() {
   try {
     const ds = await timCap();
     if (!ds.length) {
-      bao("Chưa chọn cáp nào. Bấm BẮT ĐẦU rồi chọn cổng mang tên cáp trong hộp thoại của Chrome.",
-        null, "loi");
+      bao("Không thấy cổng COM nào. Windows có thể chưa nhận cáp — xem phần hướng dẫn driver bên dưới.",
+        "BƯỚC 1/5", "loi");
       return;
     }
     dat("cong", "dang", "Đang thử " + ds.length + " cổng");
@@ -691,6 +707,7 @@ function doiTab(id) {
 veBuoc();
 $("tab-do").onclick = () => doiTab("tab-do");
 $("tab-tai").onclick = () => doiTab("tab-tai");
+$("wdriver-exe").onclick = () => { doiTab("tab-tai"); window.scrollTo({ top: 0 }); };
 
 if (!("serial" in navigator)) {
   // Điện thoại và Safari không có Web Serial ⇒ mở thẳng tab tải, đừng bắt khách bấm nút không chạy.
@@ -702,10 +719,16 @@ if (!("serial" in navigator)) {
   $("wtai").onclick = taiAset;
   const nho = docNho();
   if (nho.com && COMPORT_RE.test(nho.com)) $("wcom").value = nho.com;
+  // Đã cấp quyền cáp từ lần trước ⇒ CHẠY LUÔN khi mở trang. Không bắt bấm thêm một nút vô nghĩa:
+  // mọi thứ cần hỏi đã hỏi xong ở lần đầu rồi. Lần đầu (chưa có cáp nào) thì vẫn phải bấm, vì
+  // requestPort() của trình duyệt chỉ mở được từ một cú bấm thật của người dùng.
   navigator.serial.getPorts().then((ds) => {
-    if (ds.length) {
-      bao("Đã nhớ " + ds.length + " cáp từ lần trước — bấm BẮT ĐẦU là chạy ngay, không phải chọn lại.");
-    }
+    if (!ds.length) return;
+    bao("Đã nhớ " + ds.length + " cáp từ lần trước — đang dò, bạn không phải làm gì.");
+    if (location.hash !== "#tai") chay();
   }).catch(() => { /* không hỏi được thì thôi */ });
+
+  // Cắm cáp vào giữa chừng thì dò lại luôn, khỏi bắt bấm.
+  navigator.serial.addEventListener("connect", () => { if (!dangChay) chay(); });
   doiTab(location.hash === "#tai" ? "tab-tai" : "tab-do");
 }
