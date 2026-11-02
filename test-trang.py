@@ -74,7 +74,12 @@ def test_tep_mau_aset_tai_duoc_va_sach(trang):
         assert xau.lower() not in t.lower(), xau
 
 
-def test_nut_tai_ve_exe_con_song(trang):
+def test_nut_tai_ve_tro_dung_goi_co_that(trang):
+    """Đọc link NGAY TRÊN TRANG rồi mới kiểm — ghi cứng tên tệp vào bài kiểm thì mỗi lần lên bản mới
+    lại phải sửa bài kiểm, mà quên sửa trang thì bài kiểm vẫn xanh còn khách bấm ra trang 404."""
     pg, _ = trang
-    r = pg.request.head(pg.url.replace("index.html", "OTL-Auto-Artisan-Connector-v1.0.zip"))
-    assert r.status == 200
+    href = pg.get_attribute(".tai", "href")
+    assert href and href.endswith(".zip"), href
+    r = pg.request.head(pg.url.replace("index.html", href))
+    assert r.status == 200, (href, r.status)
+    assert int(r.headers.get("content-length", 0)) > 1_000_000

@@ -53,7 +53,7 @@
       <div class="sub">Nối Artisan với máy rang O Tesla bản cắm dây — bấm một nút</div>
     </div>
     <div class="spacer"></div>
-    <span class="lab" style="margin:0">PHIÊN BẢN 1.0 · WINDOWS</span>
+    <span class="lab" style="margin:0">PHIÊN BẢN 1.1 · WINDOWS</span>
   </div>
 </header>
 
@@ -64,8 +64,8 @@
     Người dùng không phải khai báo gì.
   </p>
 
-  <a class="tai" href="OTL-Auto-Artisan-Connector-v1.0.zip" download>
-    <span>TẢI VỀ<small>Windows · 8,4 MB · bản 1.0</small></span>
+  <a class="tai" href="OTL-Auto-Artisan-Connector-v1.1.zip" download>
+    <span>TẢI VỀ<small>Windows · 9,4 MB · bản 1.1</small></span>
   </a>
 
   <section class="web">
@@ -108,9 +108,9 @@
     <div class="row" data-tt="xong"><div class="so">01</div><div><h2>DÒ DRIVER</h2>
       <div class="ct">Cáp nào Windows chưa chạy được thì cài driver rồi bắt Windows nhận lại — CH340, CH9102, CP210x, PL2303, FTDI.</div></div></div>
     <div class="row" data-tt="xong"><div class="so">02</div><div><h2>DÒ CỔNG COM</h2>
-      <div class="ct">Nhận ra cáp theo mã VID:PID, bỏ qua cổng Bluetooth, báo rõ cổng nào đang bị phần mềm khác giữ.</div></div></div>
+      <div class="ct">Nhận ra cáp theo mã VID:PID, bỏ qua cổng Bluetooth, báo rõ cổng nào đang bị phần mềm khác giữ. Nhiều cổng được dò <b>cùng lúc</b>, nên thêm cáp không làm chờ lâu thêm.</div></div></div>
     <div class="row" data-tt="xong"><div class="so">03</div><div><h2>DÒ TỐC ĐỘ · MODBUS</h2>
-      <div class="ct">48 tổ hợp: 6 tốc độ × 4 khung truyền × RTU/ASCII. Thiết lập xuất xưởng và đường nối lần trước được thử trước nên thường xong trong một hai giây.</div></div></div>
+      <div class="ct">48 tổ hợp: 6 tốc độ × 4 khung truyền × RTU/ASCII, và dò luôn cả địa chỉ slave nếu máy đã bị đổi. Thiết lập xuất xưởng và đường nối lần trước được thử trước nên thường xong trong một hai giây. App <b>tự nhận ra là máy nào</b> — 1 kg, 3 kg hay bản auto — khách không phải chọn.</div></div></div>
     <div class="row" data-tt="xong"><div class="so">04</div><div><h2>MỞ ARTISAN</h2>
       <div class="ct">Tạo tệp cài đặt .aset đúng cổng và tốc độ vừa dò, rồi mở Artisan bằng chính tệp đó.</div></div></div>
     <div class="row" data-tt="xong"><div class="so">05</div><div><h2>KIỂM TRA LẠI</h2>
@@ -131,7 +131,10 @@
       <h2>MÁY HỖ TRỢ</h2>
       <ul>
         <li>OTL 3 kg bản Frecon.</li>
-        <li>Các máy khác đang thêm dần — liên hệ O Tesla nếu máy của bạn chưa có trong danh sách.</li>
+        <li>OTL 1 kg (Artisan đọc thẳng bus RS485).</li>
+        <li>OTL bản AUTO (bo điều khiển CMS).</li>
+        <li>App tự nhận ra máy nào — chỉ khi hai máy cùng cắm, hoặc hai kiểu máy đọc giống hệt nhau,
+        nó mới hỏi bạn chọn.</li>
       </ul>
       <h2 style="margin-top:var(--gap-l)">KHÔNG NỐI ĐƯỢC</h2>
       <ul>
@@ -143,9 +146,11 @@
   </div>
 
   <section class="canh">
-    <h2>BẢN 1.0 — ĐỌC TRƯỚC KHI DÙNG Ở QUÁN</h2>
+    <h2>BẢN 1.1 — ĐỌC TRƯỚC KHI DÙNG Ở QUÁN</h2>
     <p>Bản này chưa kèm sẵn bộ driver cáp: máy nào chưa có driver thì phần mềm chỉ nhờ Windows tự tìm trên
     mạng, có thể không ra. Gặp trường hợp đó, liên hệ O Tesla để lấy bản có kèm driver.</p>
+    <p>Ba kiểu máy đã dựng xong và kiểm bằng bus giả, <b>chưa cắm thử máy rang thật</b>. Lần đầu dùng ở
+    xưởng, nếu có gì lệch thì bấm TẢI NHẬT KÝ và gửi tệp đó cho O Tesla.</p>
   </section>
 </main>
 
@@ -167,7 +172,7 @@
         <dt>EMAIL</dt><dd><a href="mailto:otlpro.com@gmail.com">otlpro.com@gmail.com</a></dd>
         <dt>TRANG WEB</dt><dd><a href="https://otlpro.com" target="_blank" rel="noopener">otlpro.com</a></dd>
       </dl>
-      <div class="cty-chan"><span>O TESLA</span><span>v1.0</span></div>
+      <div class="cty-chan"><span>O TESLA</span><span>v1.1</span></div>
     </div>
   </div>
 </footer>

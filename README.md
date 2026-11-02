@@ -13,7 +13,17 @@ Bấm **KẾT NỐI**, phần mềm tự làm năm việc:
 4. Tạo tệp cài đặt `.aset` rồi mở Artisan bằng chính tệp đó.
 5. Chờ tới khi Artisan thật sự giữ cổng COM mới báo xong.
 
-Máy đã hỗ trợ: **OTL 3 kg bản Frecon**.
+Máy đã hỗ trợ — app **tự nhận ra là máy nào**, khách không phải chọn:
+
+| Máy | Artisan đọc ở đâu |
+|---|---|
+| OTL 3 kg (bản Frecon) | thẳng bus RS485: BT slave 1 ô 4096, ET slave 2 ô 4096, biến tần Frecon ô 12288 |
+| OTL 1 kg | thẳng bus RS485: BT/ET ô 4096, biến tần ô 8451 |
+| OTL bản AUTO | bo điều khiển CMS làm Modbus slave: BT ô 0, ET ô 1, nhiệt độ ×10 |
+
+Địa chỉ slave được **dò trên máy thật** rồi ghi vào tệp `.aset`, không ghi cứng — bo CMS cho đổi
+slave id từ HMI. Hai máy rang cùng cắm, hoặc hai kiểu máy đọc giống hệt nhau, thì app **hỏi** chứ
+không đoán.
 
 Yêu cầu: Windows 10/11, đã cài Artisan, máy rang đang bật nguồn.
 
