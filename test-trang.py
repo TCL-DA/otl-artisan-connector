@@ -223,3 +223,26 @@ def test_nut_trong_khoi_driver_dua_sang_tab_tai(trang):
     pg.evaluate("document.getElementById('wdriver').hidden = false")
     pg.click("#wdriver-exe")
     assert pg.locator("#panel-tai").is_visible()
+
+
+def test_ma_sha256_tren_trang_KHOP_voi_tep_zip_that(trang):
+    """Mã kiểm tệp mà lệch thì tệ hơn là không có: khách kiểm thấy khác, tưởng tệp bị sửa.
+    Tính lại từ chính tệp .zip mà nút tải đang trỏ tới."""
+    import hashlib
+    pg, _ = trang
+    pg.click("#tab-tai")
+    cong_bo = pg.inner_text("#sha").strip().upper()
+    assert len(cong_bo) == 64 and all(c in "0123456789ABCDEF" for c in cong_bo), cong_bo
+    href = pg.get_attribute(".tai", "href")
+    r = pg.request.get(pg.url.replace("index.html", href))
+    assert r.status == 200
+    that = hashlib.sha256(r.body()).hexdigest().upper()
+    assert that == cong_bo, "trang ghi %s nhưng tệp thật là %s" % (cong_bo, that)
+
+
+def test_trang_noi_ro_cach_qua_man_hinh_SmartScreen(trang):
+    pg, _ = trang
+    pg.click("#tab-tai")
+    chu = pg.inner_text("#smart")
+    assert "More info" in chu and "Run anyway" in chu
+    assert "chưa mua chữ ký số" in chu, chu[:200]

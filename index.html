@@ -86,6 +86,10 @@
 .canh ul{ margin:10px 0 0; padding-left:20px; max-width:68ch; }
 .canh li{ margin-bottom:8px; font-size:clamp(14px,3.6vw,17px); }
 .canh a{ color:var(--ink); font-weight:700; }
+/* Mã kiểm tệp: phải xuống dòng được trên điện thoại, không thì tràn ngang cả trang. */
+.canh code,.bam{ font-family:ui-monospace,Consolas,monospace; font-size:0.88em;
+  word-break:break-all; overflow-wrap:anywhere; }
+#sha{ display:inline-block; margin:4px 0; font-weight:700; }
 .sosanh small{ display:block; font-weight:500; text-transform:none; letter-spacing:0;
   color:var(--ink-2); font-size:12px; margin-top:2px; }
 
@@ -118,7 +122,7 @@
       <div class="sub">Nối Artisan với máy rang O Tesla bản cắm dây — bấm một nút</div>
     </div>
     <div class="spacer"></div>
-    <span class="lab" style="margin:0">PHIÊN BẢN 1.3</span>
+    <span class="lab" style="margin:0">PHIÊN BẢN 1.4</span>
   </div>
 </header>
 
@@ -156,7 +160,7 @@
         <b>không cài driver được</b> — cài driver cần quyền quản trị của Windows, trình duyệt bị cấm
         chạm vào. Hai cách:</p>
         <p style="margin-top:var(--gap)"><b>Cách nhanh nhất —</b> tải bản phần mềm Windows. Bản
-        1.3 <b>đã kèm sẵn driver</b> cho CH340 / CH9102, CP210x, PL2303 và FTDI: nó tự cài giùm rồi
+        1.4 <b>đã kèm sẵn driver</b> cho CH340 / CH9102, CP210x, PL2303 và FTDI: nó tự cài giùm rồi
         làm luôn cả năm bước, tới lúc Artisan mở ra là đã nối sẵn, bạn chỉ việc rang.</p>
         <p><button type="button" class="btn" id="wdriver-exe">SANG TAB TẢI PHẦN MỀM</button></p>
         <p style="margin-top:var(--gap-l)"><b>Hoặc tự cài —</b> xem trong Device Manager cáp của bạn
@@ -231,9 +235,26 @@
     <p class="dan">Bản Windows làm trọn năm bước bằng <b>một nút</b>: tự cài driver cáp, tự tìm cổng,
       tự dò Modbus, tự mở Artisan và tự kiểm tra lại. Người dùng không phải khai báo gì.</p>
 
-    <a class="tai" href="OTL-Auto-Artisan-Connector-v1.3.zip" download>
-      <span>TẢI VỀ<small>Windows · 12,4 MB · bản 1.3 · đã kèm sẵn driver</small></span>
+    <a class="tai" href="OTL-Auto-Artisan-Connector-v1.4.zip" download>
+      <span>TẢI VỀ<small>Windows · 12,4 MB · bản 1.4 · đã kèm sẵn driver</small></span>
     </a>
+
+    <section class="canh" id="smart">
+      <h2>WINDOWS SẼ HIỆN &ldquo;WINDOWS PROTECTED YOUR PC&rdquo; — BÌNH THƯỜNG</h2>
+      <p>Màn hình cam đó hiện ra vì phần mềm <b>chưa mua chữ ký số</b>, không phải vì nó độc hại.
+      Windows hiện cảnh báo này với mọi phần mềm của nhà sản xuất nhỏ. Cách chạy:</p>
+      <p style="font-size:clamp(16px,4.2vw,19px)"><b>Bấm &ldquo;More info&rdquo;</b> (dòng chữ nhỏ)
+      → rồi bấm <b>&ldquo;Run anyway&rdquo;</b>. Windows nhớ lựa chọn đó, lần sau không hỏi lại.</p>
+      <p>Muốn yên tâm trước khi chạy, kiểm hai thứ:</p>
+      <ul>
+        <li>Bấm phải vào tệp <code>.exe</code> → <b>Properties</b> → tab <b>Details</b>: phải thấy
+          <b>CONG TY TNHH CONG NGHIEP O TESLA</b> và <b>OTL Auto Artisan Connector</b>.</li>
+        <li>So mã kiểm tệp <code>.zip</code> vừa tải với mã O Tesla công bố:
+          <br><code class="bam" id="sha">0CE87BDA5F1ACF2FA8D5AD1A218C6E1AA9E36EA5999653BD392D3C01FFC01D4E</code>
+          <br>Lấy mã của tệp mình tải bằng PowerShell:
+          <code>Get-FileHash .\OTL-Auto-Artisan-Connector-v1.4.zip -Algorithm SHA256</code></li>
+      </ul>
+    </section>
 
     <section class="buoc">
       <div class="row" data-tt="xong"><div class="so">01</div><div><h2>DÒ DRIVER</h2>
@@ -245,8 +266,9 @@
       <div class="row" data-tt="xong"><div class="so">04</div><div><h2>MỞ ARTISAN</h2>
         <div class="ct">Tạo tệp <code>.aset</code> đúng cổng và tốc độ vừa dò, rồi mở Artisan bằng chính tệp đó.</div></div></div>
       <div class="row" data-tt="xong"><div class="so">05</div><div><h2>KIỂM TRA LẠI</h2>
-        <div class="ct">Chờ tới khi Artisan thật sự giữ cổng COM mới báo xong — không báo bừa.
-        Artisan chỉ mở cổng khi bắt đầu lấy mẫu, nên bước cuối là bạn bấm <b>ON</b> trong Artisan.</div></div></div>
+        <div class="ct">Artisan chỉ mở cổng COM khi bắt đầu lấy mẫu, nên việc cuối cùng là bạn
+        bấm <b>ON</b> trong Artisan — không phần mềm nào bấm hộ được. App tự nhận ra lúc bạn bấm
+        xong và báo XONG, không báo bừa.</div></div></div>
     </section>
 
     <div class="doi">
@@ -278,8 +300,8 @@
     </div>
 
     <section class="canh">
-      <h2>BẢN 1.3 — ĐỌC TRƯỚC KHI DÙNG Ở QUÁN</h2>
-      <p>Bản 1.3 đã <b>kèm sẵn driver</b> cho CH340 / CH9102, CP210x, PL2303 và FTDI — máy chưa
+      <h2>BẢN 1.4 — ĐỌC TRƯỚC KHI DÙNG Ở QUÁN</h2>
+      <p>Bản 1.4 đã <b>kèm sẵn driver</b> cho CH340 / CH9102, CP210x, PL2303 và FTDI — máy chưa
       nhận cáp thì phần mềm tự cài, Windows hỏi quyền thì bấm <b>Có</b>.</p>
       <p><b>Cáp PL2303 nhái</b> thì không phần mềm nào cứu được: driver Prolific đời mới chặn thẳng,
       Windows báo &ldquo;mã 10&rdquo;. Đổi sang cáp CH340 hoặc CP2102.</p>
@@ -307,7 +329,7 @@
         <dt>EMAIL</dt><dd><a href="mailto:otlpro.com@gmail.com">otlpro.com@gmail.com</a></dd>
         <dt>TRANG WEB</dt><dd><a href="https://otlpro.com" target="_blank" rel="noopener">otlpro.com</a></dd>
       </dl>
-      <div class="cty-chan"><span>O TESLA</span><span>v1.3</span></div>
+      <div class="cty-chan"><span>O TESLA</span><span>v1.4</span></div>
     </div>
   </div>
 </footer>
