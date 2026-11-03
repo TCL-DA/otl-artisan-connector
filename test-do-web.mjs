@@ -13,8 +13,19 @@ assert.ok(src.includes(moc), "do-web.js phải còn khối Khởi động");
 const than = src.slice(0, src.indexOf(moc));
 const lay = ["crc16", "khungRtu", "khungAscii", "doKhungRtu", "doKhungAscii", "soCoDau",
   "datKhoa", "oVao", "ghiSlave", "slaveCanThu", "oMoDau", "trongKhoang", "hanDay", "hanNgan",
-  "COMPORT_RE", "BAUDS", "FRAMES", "MODES", "MAY", "THU_TU", "TEMP_OK", "TEMP_X10"];
+  "COMPORT_RE", "BAUDS", "FRAMES", "MODES", "MAY", "THU_TU", "TEMP_OK", "TEMP_X10",
+  "apChuan", "CHUAN", "muot"];
 const M = new Function(than + "\nreturn {" + lay.join(",") + "};")();
+
+/* Tệp mẫu: sau khi dựng trang thì nằm cạnh đây tên "mau-<máy>.aset"; chạy test thẳng trong kho
+   mã thì chưa dựng, lùi về tệp gốc trong tools/. Cùng một nội dung, dung.py chỉ đổi tên. */
+function docMau(ten) {
+  for (const u of [new URL(`./mau-${ten}.aset`, import.meta.url),
+                   new URL(`../otl_artisan_${ten.replace(/-/g, "_")}.aset`, import.meta.url)]) {
+    try { return readFileSync(u, "utf8"); } catch { /* thử nơi kế tiếp */ }
+  }
+  throw new Error("không thấy tệp mẫu " + ten);
+}
 
 const hex = (u8) => [...u8].map((x) => x.toString(16).toUpperCase().padStart(2, "0")).join("");
 const crcCua = (b) => M.crc16(b);
@@ -190,7 +201,7 @@ test("nhịp chờ ngắn thật sự ngắn hơn nhịp đầy đủ", () => {
 test("đủ ba tệp mẫu .aset, đúng ô BT/ET của từng máy", () => {
   const mong = { "3kg-frecon": [4096, 4096], "1kg-bus": [4096, 4096], "auto-board": [0, 1] };
   for (const [ten, [bt, et]] of Object.entries(mong)) {
-    const d = readFileSync(new URL(`./mau-${ten}.aset`, import.meta.url), "utf8").split(/\r?\n/);
+    const d = docMau(ten).split(/\r?\n/);
     const o = M.oVao(d);
     assert.equal(o[0][1], bt, ten);
     assert.equal(o[1][1], et, ten);
@@ -198,7 +209,7 @@ test("đủ ba tệp mẫu .aset, đúng ô BT/ET của từng máy", () => {
 });
 
 test("vá tệp mẫu thật ra đúng sáu khoá trong [Modbus]", () => {
-  const mau = readFileSync(new URL("./mau-3kg-frecon.aset", import.meta.url), "utf8");
+  const mau = docMau("3kg-frecon");
   const d = mau.split(/\r?\n/);
   for (const [k, v] of [["type", 1], ["comport", "COM7"], ["baudrate", 19200],
     ["bytesize", 8], ["parity", "E"], ["stopbits", 2]]) M.datKhoa(d, "Modbus", k, v);
@@ -235,4 +246,55 @@ test("máy auto chạy 57600 nên 57600 phải nằm trong nhúm thử đầu", 
   // Giữ khớp với test_vong_nhanh_thu_xuat_xuong_cua_MOI_kieu_may bên bản .exe.
   const bauds = new Set(M.THU_TU.map((id) => M.MAY[id].link.baud));
   assert.ok(bauds.has(9600) && bauds.has(57600), [...bauds].join(","));
+});
+
+/* ── Chuẩn hiển thị + độ bền đường truyền (lỗi khách gặp 03/11/2026) ──────── */
+
+const MAY_MAU = ["3kg-frecon", "1kg-bus", "auto-board"];
+
+function muc(dong, ten) {
+  const i = dong.indexOf("[" + ten + "]");
+  const j = dong.findIndex((x, n) => n > i && x.trim().startsWith("["));
+  return dong.slice(i + 1, j < 0 ? dong.length : j);
+}
+
+test("làm mượt gấp đúng 5 lần mặc định Artisan", () => {
+  // Artisan lưu số lẻ, ô giao diện = (số lưu − 1) / 2. Mặc định: đường cong 3 (ô 1), RoR 7 (ô 3).
+  assert.equal(M.muot(3), 11, "đường cong: ô 1 → ô 5");
+  assert.equal(M.muot(7), 31, "RoR: ô 3 → ô 15");
+  assert.equal(M.CHUAN.General.curvefilter, 11);
+  assert.equal(M.CHUAN.RoC.deltafilter, 31);
+  assert.equal(M.CHUAN.RoC.deltaETfilter, 31);
+});
+
+test("apChuan ghi đủ bốn đường, bốn ô số và ba khoá Modbus, đúng mục", () => {
+  for (const ten of MAY_MAU) {
+    const d = docMau(ten).split(/\r?\n/);
+    M.apChuan(d);
+    const g = muc(d, "General"), r = muc(d, "RoC"), m = muc(d, "Modbus");
+    for (const k of ["ETcurve=true", "BTcurve=true", "ETlcd=true", "BTlcd=true", "curvefilter=11"]) {
+      assert.ok(g.includes(k), ten + " thiếu " + k);
+    }
+    for (const k of ["DeltaET=true", "DeltaBT=true", "DeltaETlcd=true", "DeltaBTlcd=true",
+      "deltaETfilter=31", "deltafilter=31"]) {
+      assert.ok(r.includes(k), ten + " thiếu " + k);
+    }
+    // serial_readRetries=0 là thứ giết lượt quét trên Artisan 4.x — không bao giờ được để 0
+    for (const k of ["timeout=0.5", "serial_readRetries=2", "modbus_serial_connect_delay=0.5"]) {
+      assert.ok(m.includes(k), ten + " thiếu " + k);
+    }
+    assert.ok(!m.includes("serial_readRetries=0"), ten + " còn retries=0");
+  }
+});
+
+test("tệp mẫu .aset đã mang sẵn chuẩn, khách không phải sửa gì", () => {
+  for (const ten of MAY_MAU) {
+    const d = docMau(ten).split(/\r?\n/);
+    for (const [tenMuc, cap] of Object.entries(M.CHUAN)) {
+      const co = muc(d, tenMuc);
+      for (const [k, v] of Object.entries(cap)) {
+        assert.ok(co.includes(k + "=" + v), ten + " [" + tenMuc + "] " + k + " phải là " + v);
+      }
+    }
+  }
 });

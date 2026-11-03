@@ -509,6 +509,31 @@ function ghiSlave(dong, may, slave) {
   return da;
 }
 
+/* ⛔ BẢN SAO của `ap_chuan` trong otl_aset.py — sửa một bên phải sửa cả bên kia (bài kiểm giữ cả hai).
+
+   1) Artisan 4.x bỏ hẳn khoảng nghỉ giữa hai khung Modbus (`sleepBetween()` chỉ còn `pass`) và truyền
+      thẳng số lần thử lại xuống pymodbus 3.7. Tệp .aset đời Artisan 2.x ghi serial_readRetries=0 nên
+      bản 4.x bắn đúng MỘT khung; rớt một khung là cả lượt quét dừng giữa chừng (mọi slave chung một
+      khối try) ⇒ slave đầu còn số, các slave sau về 0.0. Khách gặp đúng lỗi này 03/11/2026.
+   2) Hiện đủ bốn đường ET · BT · RoR ET · RoR BT, cả nét vẽ lẫn ô số.
+   3) Làm mượt gấp 5 lần mặc định. Artisan lưu số lẻ, ô giao diện = (số lưu − 1) / 2: đường cong mặc
+      định lưu 3 ⇒ giao diện 1 ⇒ ×5 = 5 ⇒ lưu 11; RoR mặc định lưu 7 ⇒ giao diện 3 ⇒ ×5 = 15 ⇒ lưu 31. */
+const MUOT = 5;
+const muot = (macDinh) => Math.floor((macDinh - 1) / 2) * MUOT * 2 + 1;
+const CHUAN = {
+  General: { ETcurve: "true", BTcurve: "true", ETlcd: "true", BTlcd: "true", curvefilter: muot(3) },
+  RoC: { DeltaET: "true", DeltaBT: "true", DeltaETlcd: "true", DeltaBTlcd: "true",
+         deltaETfilter: muot(7), deltafilter: muot(7) },
+  Modbus: { timeout: "0.5", serial_readRetries: "2", modbus_serial_connect_delay: "0.5" },
+};
+
+function apChuan(dong) {
+  for (const muc of Object.keys(CHUAN)) {
+    for (const [khoa, gt] of Object.entries(CHUAN[muc])) datKhoa(dong, muc, khoa, gt);
+  }
+  return dong;
+}
+
 async function taiAset() {
   if (!ketQua) return;
   const ten = ($("wcom").value || "").trim().toUpperCase();
@@ -537,6 +562,7 @@ async function taiAset() {
   datKhoa(dong, "Modbus", "parity", ketQua.parity);
   datKhoa(dong, "Modbus", "stopbits", ketQua.stopbits);
   ghiSlave(dong, may, ketQua.slave);
+  apChuan(dong);
   const blob = new Blob([dong.join("\r\n") + "\r\n"], { type: "application/octet-stream" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);

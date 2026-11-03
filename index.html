@@ -124,7 +124,7 @@
       <div class="sub">Nối Artisan với máy rang O Tesla bản cắm dây — bấm một nút</div>
     </div>
     <div class="spacer"></div>
-    <span class="lab" style="margin:0">PHIÊN BẢN 1.7</span>
+    <span class="lab" style="margin:0">PHIÊN BẢN 1.8</span>
   </div>
 </header>
 
@@ -258,13 +258,13 @@
         <li>Bấm phải vào <code>.exe</code> → <b>Properties</b> → tab <b>Details</b>: phải thấy
           <b>CONG TY TNHH CONG NGHIEP O TESLA</b> và <b>OTL Auto Artisan Connector</b>.</li>
         <li>So mã kiểm tệp <code>.zip</code> với mã O Tesla công bố:
-          <br><code class="bam" id="sha">4D8FEB2E1D9A14F7BD66E18A06AE4D89EF21D4FBAADFE307C8E3CF41738293C7</code>
-          <br>Lấy mã tệp mình tải: <code>Get-FileHash .\OTL-Auto-Artisan-Connector-v1.7.zip -Algorithm SHA256</code></li>
+          <br><code class="bam" id="sha">2D8365EB86F9CB5D760F1A6D193C7F83E849E915DC847A42D586E15D91BE4F65</code>
+          <br>Lấy mã tệp mình tải: <code>Get-FileHash .\OTL-Auto-Artisan-Connector-v1.8.zip -Algorithm SHA256</code></li>
       </ul>
     </section>
 
-    <a class="tai" href="OTL-Auto-Artisan-Connector-v1.7.zip" download>
-      <span>TẢI VỀ<small>Windows · 12,4 MB · bản 1.7 · đã kèm sẵn driver<br>bỏ chặn tệp .zip TRƯỚC khi giải nén (xem trên)</small></span>
+    <a class="tai" href="OTL-Auto-Artisan-Connector-v1.8.zip" download>
+      <span>TẢI VỀ<small>Windows · 12,4 MB · bản 1.8 · đã kèm sẵn driver<br>bỏ chặn tệp .zip TRƯỚC khi giải nén (xem trên)</small></span>
     </a>
 
     <section class="buoc">
@@ -311,11 +311,17 @@
     </div>
 
     <section class="canh">
-      <h2>BẢN 1.7 — ĐỌC TRƯỚC KHI DÙNG Ở QUÁN</h2>
-      <p>Bản 1.7 đã <b>kèm sẵn driver</b> cho CH340 / CH9102, CP210x, PL2303 và FTDI — máy chưa
+      <h2>BẢN 1.8 — ĐỌC TRƯỚC KHI DÙNG Ở QUÁN</h2>
+      <p>Bản 1.8 đã <b>kèm sẵn driver</b> cho CH340 / CH9102, CP210x, PL2303 và FTDI — máy chưa
       nhận cáp thì phần mềm tự cài, Windows hỏi quyền thì bấm <b>Có</b>.</p>
       <p><b>Cáp PL2303 nhái</b> thì không phần mềm nào cứu được: driver Prolific đời mới chặn thẳng,
       Windows báo &ldquo;mã 10&rdquo;. Đổi sang cáp CH340 hoặc CP2102.</p>
+      <p><b>Mới ở bản 1.8 — Artisan 4.x.</b> Tệp cài đặt phần mềm tạo ra đã tự mang sẵn thiết lập
+      đúng cho Artisan 4: <b>hiện đủ bốn đường ET · BT · RoR ET · RoR BT</b> và làm mượt gấp 5 lần
+      mức mặc định. Bản 1.7 trở về trước, mở trên Artisan 4 có máy chỉ hiện được một đường nhiệt,
+      các ô còn lại đứng ở 0.0 — <b>không phải hỏng cáp hay hỏng máy</b>, mà do Artisan 4 bỏ khoảng
+      nghỉ giữa hai lệnh và không còn tự hỏi lại khi rớt một lệnh. Bản 1.8 bật lại phần hỏi lại đó,
+      khách <b>không phải chỉnh gì trong Artisan</b>.</p>
       <p>Ba kiểu máy đã kiểm bằng bus giả; máy bản auto đã chạy thử trên phần cứng thật.
       Lần đầu dùng ở xưởng, nếu có gì lệch thì bấm TẢI NHẬT KÝ và gửi tệp đó cho O Tesla.</p>
     </section>
@@ -340,7 +346,7 @@
         <dt>EMAIL</dt><dd><a href="mailto:otlpro.com@gmail.com">otlpro.com@gmail.com</a></dd>
         <dt>TRANG WEB</dt><dd><a href="https://otlpro.com" target="_blank" rel="noopener">otlpro.com</a></dd>
       </dl>
-      <div class="cty-chan"><span>O TESLA</span><span>v1.7</span></div>
+      <div class="cty-chan"><span>O TESLA</span><span>v1.8</span></div>
     </div>
   </div>
 </footer>
