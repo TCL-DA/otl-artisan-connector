@@ -35,7 +35,7 @@ const BIEN_TAN = [0, 20000];
 
 const MAY = {
   "3kg-frecon": {
-    ten: "OTL 3 kg (bản Frecon)", template: "3kg-frecon", motSlave: false,
+    ten: "OTL 3 kg (bản Frecon)", link: { baud: 9600, parity: "none", stopbits: 1, mode: "rtu" }, template: "3kg-frecon", motSlave: false,
     probe: [
       { slave: 1, reg: 4096, ten: "BT", range: TEMP_OK, cot: true },
       { slave: 2, reg: 4096, ten: "ET", range: TEMP_OK, cot: true },
@@ -44,7 +44,7 @@ const MAY = {
     ],
   },
   "1kg-bus": {
-    ten: "OTL 1 kg (đọc thẳng bus)", template: "1kg-bus", motSlave: false,
+    ten: "OTL 1 kg (đọc thẳng bus)", link: { baud: 9600, parity: "none", stopbits: 1, mode: "rtu" }, template: "1kg-bus", motSlave: false,
     probe: [
       { slave: 1, quet: [1, 2, 3, 4, 5, 6, 7], reg: 4096, ten: "BT", range: TEMP_OK, cot: true },
       { slave: 2, quet: [2, 3, 4, 5, 6, 7, 1], reg: 4096, ten: "ET", range: TEMP_OK, cot: true,
@@ -53,7 +53,7 @@ const MAY = {
     ],
   },
   "auto-board": {
-    ten: "OTL bản AUTO (bo CMS)", template: "auto-board", motSlave: true,
+    ten: "OTL bản AUTO (bo CMS)", link: { baud: 57600, parity: "none", stopbits: 1, mode: "rtu" }, template: "auto-board", motSlave: true,
     probe: [
       { slave: 1, quet: [1, 2, 3, 4, 5, 6, 7], reg: 0, ten: "BT", range: TEMP_X10, cot: true },
       { slave: 1, reg: 1, ten: "ET", range: TEMP_X10, cot: true, theoSlave: "BT" },
@@ -403,7 +403,18 @@ async function doMotCong(c, baoTien) {
   const nho = docNho();
   const uu = [];
   if (nho.link) uu.push([nho.link.baud, NGUOC[nho.link.parity] || "none", nho.link.stopbits, nho.link.mode]);
-  uu.push([9600, "none", 1, "rtu"], [9600, "none", 1, "ascii"]);
+  // Xuất xưởng của MỌI kiểu máy, không chỉ của kiểu đầu danh sách: máy auto chạy 57600, hai kiểu
+  // kia 9600. Thiếu 57600 ở đây là máy auto phải chờ hết vòng quét sâu mới ra.
+  // ⚠ Giữ khớp với otl_cable_serial.to_hop_dau bên bản .exe.
+  for (const id of THU_TU) {
+    const lk = MAY[id].link;
+    if (!uu.some(([b, p, st, m]) => b === lk.baud && p === lk.parity && st === lk.stopbits && m === lk.mode)) {
+      uu.push([lk.baud, lk.parity, lk.stopbits, lk.mode]);
+    }
+  }
+  if (!uu.some(([b, p, st, m]) => b === 9600 && p === "none" && st === 1 && m === "ascii")) {
+    uu.push([9600, "none", 1, "ascii"]);   // vài máy cũ đặt ASCII
+  }
   let ganDung = null;
   const thu = async (baud, parity, stopBits, mode, opt) => {
     if (dungLai) return null;

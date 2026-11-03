@@ -218,3 +218,21 @@ test("vá tệp mẫu thật ra đúng sáu khoá trong [Modbus]", () => {
   const t = d.join("\n");
   assert.ok(!/DAKNONG/i.test(t) && !/C:\\Users/i.test(t) && !/C:\/Users/i.test(t));
 });
+
+test("mỗi kiểu máy khai thiết lập xuất xưởng, và khớp bản .exe", () => {
+  const mong = { "3kg-frecon": 9600, "1kg-bus": 9600, "auto-board": 57600 };
+  for (const [id, baud] of Object.entries(mong)) {
+    const lk = M.MAY[id].link;
+    assert.ok(lk, id + " thiếu link");
+    assert.equal(lk.baud, baud, id);
+    assert.equal(lk.parity, "none");
+    assert.equal(lk.stopbits, 1);
+    assert.equal(lk.mode, "rtu");
+  }
+});
+
+test("máy auto chạy 57600 nên 57600 phải nằm trong nhúm thử đầu", () => {
+  // Giữ khớp với test_vong_nhanh_thu_xuat_xuong_cua_MOI_kieu_may bên bản .exe.
+  const bauds = new Set(M.THU_TU.map((id) => M.MAY[id].link.baud));
+  assert.ok(bauds.has(9600) && bauds.has(57600), [...bauds].join(","));
+});
