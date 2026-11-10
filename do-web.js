@@ -35,7 +35,7 @@ const BIEN_TAN = [0, 20000];
 
 const MAY = {
   "3kg-frecon": {
-    ten: "OTL 3 kg (bản Frecon)", link: { baud: 9600, parity: "none", stopbits: 1, mode: "rtu" }, template: "3kg-frecon", motSlave: false,
+    ten: "OTL 3 kg (bản Frecon)", tep: "3kg-Frecon", link: { baud: 9600, parity: "none", stopbits: 1, mode: "rtu" }, template: "3kg-frecon", motSlave: false,
     probe: [
       { slave: 1, reg: 4096, ten: "BT", range: TEMP_OK, cot: true },
       { slave: 2, reg: 4096, ten: "ET", range: TEMP_OK, cot: true },
@@ -44,7 +44,7 @@ const MAY = {
     ],
   },
   "1kg-bus": {
-    ten: "OTL 1 kg (đọc thẳng bus)", link: { baud: 9600, parity: "none", stopbits: 1, mode: "rtu" }, template: "1kg-bus", motSlave: false,
+    ten: "OTL 1 kg (đọc thẳng bus)", tep: "1kg", link: { baud: 9600, parity: "none", stopbits: 1, mode: "rtu" }, template: "1kg-bus", motSlave: false,
     probe: [
       { slave: 1, quet: [1, 2, 3, 4, 5, 6, 7], reg: 4096, ten: "BT", range: TEMP_OK, cot: true },
       { slave: 2, quet: [2, 3, 4, 5, 6, 7, 1], reg: 4096, ten: "ET", range: TEMP_OK, cot: true,
@@ -53,7 +53,7 @@ const MAY = {
     ],
   },
   "auto-board": {
-    ten: "OTL bản AUTO (bo CMS)", link: { baud: 57600, parity: "none", stopbits: 1, mode: "rtu" }, template: "auto-board", motSlave: true,
+    ten: "OTL bản AUTO (bo CMS)", tep: "AUTO-CMS", link: { baud: 57600, parity: "none", stopbits: 1, mode: "rtu" }, template: "auto-board", motSlave: true,
     probe: [
       { slave: 1, quet: [1, 2, 3, 4, 5, 6, 7], reg: 0, ten: "BT", range: TEMP_X10, cot: true },
       { slave: 1, reg: 1, ten: "ET", range: TEMP_X10, cot: true, theoSlave: "BT" },
@@ -82,14 +82,61 @@ const LOC = [...new Set(Object.keys(CHIPS).map((k) => k.split(":")[0]))]
 const COMPORT_RE = /^COM\d{1,3}$/;
 const DEM_TOI_DA = 4096;
 const NHO = "otl-artisan-connector";        // khoá localStorage
+/* Chờ người bấm ON: thao tác TAY, phải cho rộng rãi. Giữ bằng CHO_BAM_ON (300 s) bên bản .exe. */
+const CHO_BAM_ON_MS = 300000;
 
 const BUOC = [
   ["cap", "DÒ CÁP", "Tìm cáp USB–RS485 đã cắm vào máy tính"],
   ["cong", "DÒ CỔNG COM", "Thử từng cổng đã được cấp quyền"],
   ["duong", "DÒ TỐC ĐỘ · MODBUS", "Thử tốc độ và kiểu khung cho tới khi máy trả lời, rồi nhận ra là máy nào"],
   ["aset", "TẠO TỆP CHO ARTISAN", "Sinh tệp .aset đúng máy và đúng đường nối vừa dò"],
-  ["kiem", "KIỂM TRA LẠI", "Chờ tới khi Artisan thật sự giữ cổng COM"],
+  // Artisan nạp .aset xong CHƯA mở cổng — nó chỉ mở cổng khi bấm ON (đo 02/11/2026). Nói rõ từ đầu.
+  ["kiem", "BẤM ON TRONG ARTISAN", "Bấm đúp tệp vừa tải, Artisan mở lên thì bấm ON — trang tự nhận ra"],
 ];
+
+/* ── Tên cổng COM ───────────────────────────────────────────────────────────
+   Trình duyệt KHÔNG cho trang biết cổng tên là gì: getInfo() chỉ có mã chip VID:PID. Đã thử hai đường
+   vòng, cả hai đều tắc (10/11/2026) — đừng thử lại:
+   · `hwgrep://1A86:7523` để Artisan tự tìm cổng theo mã chip: Artisan 4.2 KHÔNG đóng gói
+     serial.urlhandler của pyserial ⇒ báo "protocol not known".
+   · Tên thiết bị nhân Windows thay cho COMn: driver CH340 đặt tên chung `\Device\SerialN`, số N
+     không đoán được.
+   Nên lần đầu vẫn phải hỏi người dùng MỘT lần — nhưng hỏi cho dễ: gõ số trần, gõ "com 5", hay dán
+   nguyên dòng Chrome hiện "USB-SERIAL CH340 (COM5)" đều nhận; rồi nhớ THEO TỪNG CÁP. */
+function chuanCom(s) {
+  const t = String(s || "");
+  const m = /COM\s*(\d{1,3})(?!\d)/i.exec(t) || /^\s*(\d{1,3})\s*$/.exec(t);
+  if (!m) return "";
+  const n = parseInt(m[1], 10);
+  return n >= 1 && n <= 256 ? "COM" + n : "";
+}
+
+function hex4(n) { return n.toString(16).padStart(4, "0"); }
+
+function maCap(c) {
+  const i = c && c.getInfo ? c.getInfo() : {};
+  return i.usbVendorId === undefined ? "khong-usb" : hex4(i.usbVendorId) + ":" + hex4(i.usbProductId);
+}
+
+/* Windows đặt số COM theo TỪNG CÁP (cáp không có số sê-ri thì theo cả lỗ USB), nên một số chung cho
+   mọi cáp là đem COM của cáp này gán cho cáp kia. Dữ liệu cũ (trước 10/11/2026) chỉ có một `com`
+   chung — vẫn dùng khi chưa có bảng theo cáp, khỏi bắt khách cũ gõ lại. */
+function comDaNho(nho, ma) {
+  const theo = (nho && nho.comTheoCap) || {};
+  const v = theo[ma] || (Object.keys(theo).length ? "" : (nho && nho.com) || "");
+  return COMPORT_RE.test(v) ? v : "";
+}
+
+/* Tên tệp đọc là hiểu, nằm trong thư mục Tải về vẫn biết là gì: máy · cổng · đường nối · ngày.
+     OTL-AUTO-CMS_COM5_57600-8N1-RTU_2026-11-10.aset
+   ⚠ Giữ khớp với otl_cable_aset.ten_tep bên bản .exe — mỗi bên một bài kiểm giữ cùng một chuỗi. */
+function tenTepAset(may, kq, com, ngay) {
+  const d = ngay || new Date();
+  const ymd = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-"
+    + String(d.getDate()).padStart(2, "0");
+  const duong = kq.baud + "-8" + kq.parity + kq.stopbits + "-" + String(kq.mode).toUpperCase();
+  return ["OTL-" + may.tep, com, duong, ymd].join("_").replace(/[^A-Za-z0-9._-]/g, "-") + ".aset";
+}
 
 let cong = null, dangChay = false, dungLai = false, ketQua = null, dangCho = false;
 const tt = {};        // trạng thái từng bước
@@ -342,9 +389,8 @@ function bao(chu, buoc, loai) {
 }
 
 function tenChip(c) {
-  const i = c && c.getInfo ? c.getInfo() : {};
-  if (i.usbVendorId === undefined) return "cổng trên bo mạch chủ (không qua USB)";
-  const ma = i.usbVendorId.toString(16).padStart(4, "0") + ":" + i.usbProductId.toString(16).padStart(4, "0");
+  const ma = maCap(c);
+  if (ma === "khong-usb") return "cổng trên bo mạch chủ (không qua USB)";
   return CHIPS[ma] ? CHIPS[ma] + " · " + ma : "chip lạ · " + ma;
 }
 
@@ -536,13 +582,15 @@ function apChuan(dong) {
 
 async function taiAset() {
   if (!ketQua) return;
-  const ten = ($("wcom").value || "").trim().toUpperCase();
+  const ten = chuanCom($("wcom").value);
   if (!COMPORT_RE.test(ten)) {
-    bao("Tên cổng phải là chữ COM kèm số, ví dụ COM3. Tên đó nằm ngay trong hộp thoại chọn cổng của "
-      + "Chrome, hoặc trong Device Manager của Windows.", "BƯỚC 4/5", "loi");
-    $("wcom").focus();
+    canDienCong();
+    bao("Chưa có tên cổng. Gõ số cổng COM của cáp — ví dụ 5 cho COM5. Không biết số thì bấm "
+      + "XEM TÊN CỔNG: Chrome hiện lại danh sách, tên cổng nằm trong ngoặc.", "BƯỚC 4/5", "loi");
     return;
   }
+  $("wcom").value = ten;
+  $("wcom").classList.remove("can-dien");
   const may = MAY[ketQua.mayId];
   let mau;
   try {
@@ -566,24 +614,47 @@ async function taiAset() {
   const blob = new Blob([dong.join("\r\n") + "\r\n"], { type: "application/octet-stream" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "OTL-" + may.template + "-" + ten + ".aset";
+  a.download = tenTepAset(may, ketQua, ten);
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 10000);
-  ghiNho({ com: ten, link: { baud: ketQua.baud, parity: ketQua.parity, stopbits: ketQua.stopbits, mode: ketQua.mode } });
+  const theoCap = Object.assign({}, docNho().comTheoCap || {}, { [maCap(cong)]: ten });
+  ghiNho({ com: ten, comTheoCap: theoCap,
+    link: { baud: ketQua.baud, parity: ketQua.parity, stopbits: ketQua.stopbits, mode: ketQua.mode } });
   dat("aset", "xong", "Đã tải tệp " + a.download);
-  choArtisan();
+  choArtisan(ten);
+}
+
+/* Chưa biết tên cổng: làm ô nhập nổi lên và đặt con trỏ vào đó, để khách gõ ngay khỏi phải tìm. */
+function canDienCong() {
+  const o = $("wcom");
+  o.classList.add("can-dien");
+  $("wket").scrollIntoView({ block: "nearest" });
+  o.focus({ preventScroll: true });
+}
+
+/* Trang không đọc được tên cổng, nhưng hộp chọn cổng của Chrome thì CÓ hiện: "USB-SERIAL CH340 (COM5)".
+   Nút này chỉ mở lại hộp đó cho khách NHÌN số — chọn hay Huỷ đều được, trang không lấy gì từ đó.
+   Lọc đúng chip của cáp vừa dò để danh sách chỉ còn cáp đó, khỏi lẫn cổng Bluetooth. */
+async function xemTenCong() {
+  const i = cong && cong.getInfo ? cong.getInfo() : {};
+  const loc = i.usbVendorId === undefined ? LOC
+    : [{ usbVendorId: i.usbVendorId, usbProductId: i.usbProductId }];
+  bao("Chrome đang hiện danh sách cổng — nhìn số trong ngoặc, ví dụ USB-SERIAL CH340 (COM5), rồi bấm "
+    + "Huỷ và gõ số đó vào ô TÊN CỔNG.", "BƯỚC 4/5");
+  try { await navigator.serial.requestPort({ filters: loc }); } catch (e) { /* bấm Huỷ — bình thường */ }
+  canDienCong();
 }
 
 /* ── Bước 5: chờ Artisan GIỮ cổng ───────────────────────────────────────── */
 /* Mẹo giống bản .exe: không đọc hộ nhiệt độ (làm thế là giành cổng của Artisan). Chỉ thử MỞ cổng —
    mở không được nữa nghĩa là phần mềm khác đang cầm nó, mà lúc này phần mềm đó là Artisan. */
-async function choArtisan() {
+async function choArtisan(ten) {
   if (dangCho) return;
   dangCho = true;
-  dat("kiem", "dang", "Bấm đúp vào tệp vừa tải — Artisan sẽ mở. Trang này đang chờ…");
-  bao("Bấm đúp vào tệp .aset vừa tải. Artisan mở ra là xong — trang tự nhận ra, không cần làm gì thêm.",
-    "BƯỚC 5/5");
-  const het = Date.now() + 180000;            // chờ tối đa 3 phút rồi thôi, đừng quay mãi
+  dat("kiem", "dang", "Bấm đúp tệp vừa tải → Artisan mở lên → bấm ON. Trang đang canh…");
+  bao("Bấm đúp tệp .aset vừa tải. Artisan mở lên thì bấm ON — Artisan chỉ mở cổng khi bấm ON. "
+    + "Trang tự nhận ra, bạn không cần quay lại đây.", "BƯỚC 5/5");
+  const het = Date.now() + CHO_BAM_ON_MS;     // chờ có hạn rồi thôi, đừng quay mãi
   while (Date.now() < het && dangCho) {
     await nghi(2000);
     let moDuoc = false;
@@ -601,9 +672,11 @@ async function choArtisan() {
   }
   if (dangCho) {
     dangCho = false;
-    dat("kiem", "canh", "Chưa thấy Artisan cầm cổng. Mở tệp .aset rồi thử lại.");
-    bao("Chưa thấy Artisan giữ cổng. Bấm đúp tệp .aset vừa tải; nếu Artisan đã mở sẵn thì đóng rồi "
-      + "mở lại bằng chính tệp đó.", null, "loi");
+    // Đã bấm ON mà cổng vẫn rảnh thì gần như chắc là Artisan đang mở một cổng KHÁC — tên cổng gõ sai.
+    dat("kiem", "canh", "Chưa thấy Artisan cầm cổng " + (ten || "") + ".");
+    bao("Chưa thấy Artisan giữ cổng " + (ten || "") + ". Chưa bấm ON thì bấm ON. Đã bấm ON mà Artisan "
+      + "báo lỗi cổng thì tên cổng chưa đúng — bấm XEM TÊN CỔNG, sửa ô TÊN CỔNG rồi tải lại tệp.",
+    null, "loi");
   }
 }
 
@@ -631,19 +704,23 @@ function xongDo(r, c) {
   $("wket-chip").textContent = "Cáp: " + tenChip(c) + (sl ? " — " + sl : "");
   $("wket").hidden = false;
   $("wtai").disabled = false;
-  const nho = docNho();
-  if (nho.com && COMPORT_RE.test(nho.com)) $("wcom").value = nho.com;
-  // Đã biết tên cổng từ lần trước ⇒ TỰ tải tệp luôn. Trình duyệt không cho trang web biết cổng tên
-  // là gì (getInfo() chỉ có VID/PID), nên lần ĐẦU vẫn phải hỏi một lần; từ lần sau thì không.
-  if (nho.com && COMPORT_RE.test(nho.com)) {
-    dat("aset", "dang", "Đang tạo tệp cho Artisan (" + nho.com + ", nhớ từ lần trước)");
+  // Đã biết tên cổng CỦA ĐÚNG CÁP NÀY từ lần trước ⇒ TỰ tải tệp luôn. Lần ĐẦU vẫn phải hỏi một lần
+  // (xem chú thích ở chuanCom) — và KHÔNG điền sẵn số đoán: ô hiện "COM3" trông như trang đã dò ra,
+  // khách bấm tải là Artisan mở nhầm cổng (gặp thật 10/11/2026: cáp ở COM5, ô ghi COM3).
+  const daNho = comDaNho(docNho(), maCap(c));
+  if (daNho) {
+    $("wcom").value = daNho;
+    $("wcom").classList.remove("can-dien");
+    dat("aset", "dang", "Đang tạo tệp cho Artisan (" + daNho + ", nhớ từ lần trước)");
     bao("Nhận ra " + may.ten + " — đang tạo tệp cho Artisan…", "BƯỚC 4/5", "xong");
     taiAset();
     return;
   }
-  dat("aset", "dang", "Điền tên cổng rồi bấm TẢI TỆP CHO ARTISAN");
-  bao("Nhận ra " + may.ten + ". Còn một việc: điền tên cổng — lần đầu thôi, lần sau trang tự nhớ.",
-    "BƯỚC 4/5", "xong");
+  if (!chuanCom($("wcom").value)) $("wcom").value = "";
+  dat("aset", "dang", "Gõ số cổng COM rồi bấm TẢI TỆP CHO ARTISAN");
+  bao("Nhận ra " + may.ten + ". Còn một việc, lần đầu thôi: gõ số cổng COM của cáp (ví dụ 5). "
+    + "Không biết số thì bấm XEM TÊN CỔNG.", "BƯỚC 4/5", "xong");
+  canDienCong();
 }
 
 async function chay() {
@@ -754,8 +831,14 @@ if (!("serial" in navigator)) {
 } else {
   $("wgo").onclick = chay;
   $("wtai").onclick = taiAset;
-  const nho = docNho();
-  if (nho.com && COMPORT_RE.test(nho.com)) $("wcom").value = nho.com;
+  $("wxemcong").onclick = xemTenCong;
+  // Enter là tải; rời ô thì đổi "5" / "usb-serial ch340 (com5)" về "COM5" cho khách thấy trang hiểu đúng.
+  $("wcom").addEventListener("keydown", (e) => { if (e.key === "Enter" && !$("wtai").disabled) taiAset(); });
+  $("wcom").addEventListener("change", () => {
+    const v = chuanCom($("wcom").value);
+    if (v) { $("wcom").value = v; $("wcom").classList.remove("can-dien"); }
+  });
+  // Không điền sẵn tên cổng ở đây: chưa biết cáp nào đang cắm. xongDo() điền theo đúng cáp.
   // Đã cấp quyền cáp từ lần trước ⇒ CHẠY LUÔN khi mở trang. Không bắt bấm thêm một nút vô nghĩa:
   // mọi thứ cần hỏi đã hỏi xong ở lần đầu rồi. Lần đầu (chưa có cáp nào) thì vẫn phải bấm, vì
   // requestPort() của trình duyệt chỉ mở được từ một cú bấm thật của người dùng.

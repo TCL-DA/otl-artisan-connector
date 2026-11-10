@@ -14,7 +14,7 @@ const than = src.slice(0, src.indexOf(moc));
 const lay = ["crc16", "khungRtu", "khungAscii", "doKhungRtu", "doKhungAscii", "soCoDau",
   "datKhoa", "oVao", "ghiSlave", "slaveCanThu", "oMoDau", "trongKhoang", "hanDay", "hanNgan",
   "COMPORT_RE", "BAUDS", "FRAMES", "MODES", "MAY", "THU_TU", "TEMP_OK", "TEMP_X10",
-  "apChuan", "CHUAN", "muot"];
+  "apChuan", "CHUAN", "muot", "chuanCom", "comDaNho", "tenTepAset"];
 const M = new Function(than + "\nreturn {" + lay.join(",") + "};")();
 
 /* Tệp mẫu: sau khi dựng trang thì nằm cạnh đây tên "mau-<máy>.aset"; chạy test thẳng trong kho
@@ -120,6 +120,44 @@ test("tên cổng COM: chỉ nhận COM kèm 1–3 số", () => {
   for (const t of ["COM1", "COM3", "COM256"]) assert.ok(M.COMPORT_RE.test(t), t);
   for (const t of ["", "COM", "COM0012", "COM3; rm", "/dev/ttyUSB0", "com3", "COM3 "])
     assert.ok(!M.COMPORT_RE.test(t), t + " phải bị loại");
+});
+
+test("ô tên cổng: gõ kiểu nào cũng ra COMn — số trần, chữ thường, dán nguyên dòng Chrome", () => {
+  const dung = { "5": "COM5", " 12 ": "COM12", "com5": "COM5", "COM 7": "COM7", "Com09": "COM9",
+    "USB-SERIAL CH340 (COM5)": "COM5", "USB-SERIAL CH340 (COM5) - Paired": "COM5", "COM256": "COM256" };
+  for (const [vao, ra] of Object.entries(dung)) assert.equal(M.chuanCom(vao), ra, vao);
+  for (const xau of ["", "COM", "COM0", "0", "COM257", "COM1234", "abc", "5a", "COM3; rm -rf", null, undefined]) {
+    const r = M.chuanCom(xau);
+    assert.ok(r === "" || (r === "COM3" && String(xau).startsWith("COM3;")), String(xau) + " → " + r);
+  }
+  // Ra gì thì cũng phải lọt cửa COMPORT_RE — tệp .aset không bao giờ nhận chuỗi lạ.
+  for (const vao of Object.keys(dung)) assert.ok(M.COMPORT_RE.test(M.chuanCom(vao)), vao);
+});
+
+test("nhớ cổng THEO TỪNG CÁP, không đem COM cáp này gán cho cáp kia", () => {
+  const nho = { com: "COM9", comTheoCap: { "1a86:7523": "COM5", "067b:2303": "COM9" } };
+  assert.equal(M.comDaNho(nho, "1a86:7523"), "COM5");
+  assert.equal(M.comDaNho(nho, "067b:2303"), "COM9");
+  assert.equal(M.comDaNho(nho, "10c4:ea60"), "", "cáp lạ: không đoán bằng số của cáp khác");
+  // Dữ liệu cũ chỉ có một `com` chung: vẫn dùng, khỏi bắt khách cũ gõ lại.
+  assert.equal(M.comDaNho({ com: "COM3" }, "1a86:7523"), "COM3");
+  assert.equal(M.comDaNho({}, "1a86:7523"), "");
+  assert.equal(M.comDaNho({ com: "COM3; rm" }, "1a86:7523"), "", "chuỗi bẩn trong localStorage bị loại");
+});
+
+test("tên tệp .aset: máy · cổng · đường nối · ngày — GIỐNG HỆT bản .exe", () => {
+  const ngay = new Date(2026, 10, 10);               // 10/11/2026, tháng tính từ 0
+  const kq = { baud: 57600, parity: "N", stopbits: 1, mode: "rtu" };
+  assert.equal(M.tenTepAset(M.MAY["auto-board"], kq, "COM5", ngay),
+    "OTL-AUTO-CMS_COM5_57600-8N1-RTU_2026-11-10.aset");
+  assert.equal(M.tenTepAset(M.MAY["3kg-frecon"], { baud: 9600, parity: "E", stopbits: 2, mode: "ascii" },
+    "COM12", new Date(2026, 0, 5)), "OTL-3kg-Frecon_COM12_9600-8E2-ASCII_2026-01-05.aset");
+  assert.equal(M.tenTepAset(M.MAY["1kg-bus"], { baud: 9600, parity: "N", stopbits: 1, mode: "rtu" },
+    "COM3", ngay), "OTL-1kg_COM3_9600-8N1-RTU_2026-11-10.aset");
+  for (const id of M.THU_TU) {
+    assert.ok(M.MAY[id].tep, id + " thiếu tên ngắn cho tệp");
+    assert.match(M.tenTepAset(M.MAY[id], kq, "COM5", ngay), /^[A-Za-z0-9._-]+\.aset$/);
+  }
 });
 
 test("48 tổ hợp, xuất xưởng 9600 8N1 RTU thử đầu tiên", () => {

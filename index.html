@@ -67,6 +67,14 @@
 .ket .xuat .btn:disabled{ color:var(--graphite); background:transparent; border-color:var(--graphite);
   cursor:not-allowed; }
 .ket .nho{ font-size:clamp(13px,3.4vw,15px); color:var(--graphite); max-width:68ch; }
+.ket .xuat input::placeholder{ color:var(--graphite); opacity:1; }
+/* Chưa biết tên cổng: viền dày, sáng hẳn lên — chỗ cần gõ phải nhìn ra ngay */
+.ket .xuat input.can-dien{ border:3px solid var(--canvas); padding:11px 14px; }
+.ket .btn.ma{ color:var(--canvas); background:transparent; border-color:var(--graphite); margin-right:12px; }
+.ket .btn.ma:hover{ border-color:var(--canvas); }
+.ket .btn.ma:focus-visible{ outline:3px solid var(--canvas); outline-offset:2px; }
+/* Chú thích nằm hẳn DƯỚI nút: để cạnh nút thì trên điện thoại chữ chảy vòng quanh nút, đọc rối */
+.ket .ma + .nho{ display:block; margin-top:10px; }
 
 /* ── Bảng hỏi (chọn máy / chọn cổng) ──────────────────────────────────── */
 .hoi .hang{ display:flex; gap:var(--gap); flex-wrap:wrap; margin-top:var(--gap); }
@@ -161,9 +169,9 @@
         <p>Không có cổng COM nào hiện ra, nghĩa là Windows chưa nhận cáp USB–RS485. Trang web
         <b>không cài driver được</b> — cài driver cần quyền quản trị của Windows, trình duyệt bị cấm
         chạm vào. Hai cách:</p>
-        <p style="margin-top:var(--gap)"><b>Cách nhanh nhất —</b> tải bản phần mềm Windows. Bản
-        1.6 <b>đã kèm sẵn driver</b> cho CH340 / CH9102, CP210x, PL2303 và FTDI: nó tự cài giùm rồi
-        làm luôn cả năm bước, tới lúc Artisan mở ra là đã nối sẵn, bạn chỉ việc rang.</p>
+        <p style="margin-top:var(--gap)"><b>Cách nhanh nhất —</b> tải bản phần mềm Windows. Bản đó
+        <b>đã kèm sẵn driver</b> cho CH340 / CH9102, CP210x, PL2303 và FTDI: nó tự cài giùm rồi
+        làm luôn cả năm bước, tự mở Artisan — bạn chỉ còn bấm ON là rang.</p>
         <p><button type="button" class="btn" id="wdriver-exe">SANG TAB TẢI PHẦN MỀM</button></p>
         <p style="margin-top:var(--gap-l)"><b>Hoặc tự cài —</b> xem trong Device Manager cáp của bạn
         là chip gì, rồi tải đúng bộ bên dưới từ trang của hãng, giải nén và chạy:</p>
@@ -199,13 +207,16 @@
         <p id="wket-chip"></p>
         <div class="xuat">
           <div><label class="lab" for="wcom">TÊN CỔNG</label>
-            <input id="wcom" type="text" value="COM3" maxlength="6" spellcheck="false"
-              autocapitalize="characters" autocomplete="off"></div>
+            <input id="wcom" type="text" placeholder="COM?" maxlength="40" spellcheck="false"
+              autocapitalize="characters" autocomplete="off" aria-describedby="wket-nho"></div>
           <button id="wtai" type="button" class="btn" disabled>TẢI TỆP CHO ARTISAN</button>
         </div>
-        <p class="nho" id="wket-nho">Trình duyệt không cho trang web biết cổng tên là gì — tên đó nằm
-        ngay trong hộp thoại chọn cổng của Chrome (ví dụ &ldquo;COM3 (USB-SERIAL CH340)&rdquo;).
-        Điền đúng rồi bấm tải; lần sau trang tự nhớ.</p>
+        <p class="nho" id="wket-nho">Trình duyệt chỉ cho trang biết mã chip của cáp, không cho biết số
+        cổng COM — nên lần đầu cần bạn gõ một lần, gõ số là đủ (ví dụ <b>5</b> cho COM5). Lần sau trang
+        tự nhớ theo từng cáp và tự tải tệp.</p>
+        <p><button id="wxemcong" type="button" class="btn ma">XEM TÊN CỔNG</button>
+          <span class="nho">Chrome hiện lại danh sách cổng, số nằm trong ngoặc — ví dụ
+          &ldquo;USB-SERIAL CH340 (COM5)&rdquo;. Nhìn xong bấm Huỷ.</span></p>
       </div>
     </div>
 
@@ -220,6 +231,9 @@
           <td class="co">tự cài<br><small>kèm sẵn 4 bộ</small></td></tr>
         <tr><td>Dò tốc độ · Modbus · nhận ra là máy nào · dò slave</td>
           <td class="co">có</td><td class="co">có</td></tr>
+        <tr><td>Biết số cổng COM của cáp</td>
+          <td class="mot-phan">gõ một lần<br><small>sau đó tự nhớ</small></td>
+          <td class="co">tự biết</td></tr>
         <tr><td>Tạo tệp cài đặt <code>.aset</code></td>
           <td class="co">có</td><td class="co">có</td></tr>
         <tr><td>Mở Artisan lên</td>
@@ -228,8 +242,9 @@
           <td class="co">có</td><td class="co">có</td></tr>
       </tbody>
     </table>
-    <p class="dan-phu" style="margin-top:var(--gap)">Hai chỗ trình duyệt bị cấm, không phần mềm web nào
-      làm được: cài driver (cần quyền quản trị) và tự chạy Artisan. Phần còn lại trang này làm đủ.</p>
+    <p class="dan-phu" style="margin-top:var(--gap)">Ba chỗ trình duyệt bị cấm, không phần mềm web nào
+      làm được: cài driver (cần quyền quản trị), tự chạy Artisan, và đọc số cổng COM (trình duyệt chỉ
+      cho biết mã chip của cáp). Phần còn lại trang này làm đủ.</p>
   </section>
 
   <!-- ── Tab 2: tải phần mềm ───────────────────────────────────────────── -->

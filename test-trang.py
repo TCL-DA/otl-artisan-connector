@@ -181,6 +181,92 @@ def test_may_tinh_khong_bi_tran_ngang(trang):
     assert rong[0] <= rong[1] + 1, rong
 
 
+# ── Tên cổng COM: không đoán bừa, hỏi cho dễ, nhớ theo cáp ─────────────────
+# Cảnh có thật 10/11/2026: cáp CH340 ở COM5, ô TÊN CỔNG hiện sẵn "COM3" (số gõ cứng trong HTML) —
+# trông như trang đã dò ra, khách bấm tải là Artisan mở nhầm cổng.
+CAP_CH340 = "({getInfo: () => ({usbVendorId: 0x1a86, usbProductId: 0x7523}),"\
+            " open: async () => {}, close: async () => {}})"
+KQ_AUTO = "({mayId: 'auto-board', baud: 57600, parity: 'N', stopbits: 1, mode: 'rtu'," \
+          " doc: {BT: 221, ET: 224}, slave: {BT: 1, ET: 1}, chac: true})"
+TEN_TEP_RE = r"^OTL-AUTO-CMS_COM5_57600-8N1-RTU_\d{4}-\d{2}-\d{2}\.aset$"
+
+
+def test_o_ten_cong_KHONG_dien_san_so_doan(trang):
+    pg, _ = trang
+    assert pg.input_value("#wcom") == ""
+    assert "COM3" not in (pg.get_attribute("#wcom", "value") or "")
+
+
+def test_lan_dau_nhan_may_thi_hoi_so_cong_chu_khong_tu_tai(trang):
+    pg, loi = trang
+    pg.evaluate("localStorage.clear()")
+    pg.evaluate("xongDo(%s, %s)" % (KQ_AUTO, CAP_CH340))
+    assert pg.locator("#wket").is_visible()
+    assert pg.input_value("#wcom") == ""
+    assert "can-dien" in pg.get_attribute("#wcom", "class")
+    assert pg.evaluate("document.activeElement.id") == "wcom", "con trỏ phải nằm sẵn trong ô"
+    assert pg.locator("#wxemcong").is_visible()
+    assert "XEM TÊN CỔNG" in pg.inner_text("#wbao-chu")
+    assert loi == []
+
+
+def test_go_so_tran_roi_Enter_thi_tai_tep_ten_ro_rang(trang):
+    import re
+    pg, loi = trang
+    pg.evaluate("localStorage.clear()")
+    pg.evaluate("xongDo(%s, %s)" % (KQ_AUTO, CAP_CH340))
+    pg.fill("#wcom", "5")
+    with pg.expect_download() as tai:
+        pg.press("#wcom", "Enter")
+    d = tai.value
+    assert re.match(TEN_TEP_RE, d.suggested_filename), d.suggested_filename
+    noi_dung = open(d.path(), encoding="utf-8").read()
+    assert "comport=COM5" in noi_dung and "baudrate=57600" in noi_dung
+    assert pg.input_value("#wcom") == "COM5", "trang phải hiện lại cho khách thấy nó hiểu đúng"
+    nho = pg.evaluate("JSON.parse(localStorage.getItem('otl-artisan-connector'))")
+    assert nho["comTheoCap"]["1a86:7523"] == "COM5"
+    assert "BẤM ON" in pg.inner_text("#wbuoc").upper()
+    assert loi == []
+
+
+def test_dan_nguyen_dong_Chrome_cung_hieu(trang):
+    pg, _ = trang
+    pg.evaluate("localStorage.clear()")
+    pg.evaluate("xongDo(%s, %s)" % (KQ_AUTO, CAP_CH340))
+    pg.fill("#wcom", "USB-SERIAL CH340 (COM5)")
+    with pg.expect_download() as tai:
+        pg.click("#wtai")
+    assert tai.value.suggested_filename.split("_")[1] == "COM5"
+
+
+def test_lan_sau_cung_cap_thi_TU_TAI_khong_hoi(trang):
+    import re
+    pg, _ = trang
+    pg.evaluate("""localStorage.setItem('otl-artisan-connector',
+        JSON.stringify({comTheoCap: {'1a86:7523': 'COM5', '067b:2303': 'COM9'}}))""")
+    with pg.expect_download() as tai:
+        pg.evaluate("xongDo(%s, %s)" % (KQ_AUTO, CAP_CH340))
+    assert re.match(TEN_TEP_RE, tai.value.suggested_filename), tai.value.suggested_filename
+
+
+def test_cap_khac_thi_KHONG_dung_so_cua_cap_kia(trang):
+    pg, _ = trang
+    pg.evaluate("""localStorage.setItem('otl-artisan-connector',
+        JSON.stringify({com: 'COM9', comTheoCap: {'067b:2303': 'COM9'}}))""")
+    pg.evaluate("xongDo(%s, %s)" % (KQ_AUTO, CAP_CH340))
+    assert pg.input_value("#wcom") == "", "cáp CH340 chưa từng gõ số — không được đem COM9 của PL2303"
+
+
+def test_dien_thoai_khoi_ten_cong_khong_tran(trang_dt):
+    pg, _ = trang_dt
+    pg.evaluate("localStorage.clear()")
+    pg.evaluate("xongDo(%s, %s)" % (KQ_AUTO, CAP_CH340))
+    rong = pg.evaluate("[document.documentElement.scrollWidth, window.innerWidth]")
+    assert rong[0] <= rong[1] + 1, rong
+    h = pg.locator("#wxemcong").bounding_box()
+    assert h["height"] >= 40, h
+
+
 # ── Thiếu driver: trang phải CHỈ CHỖ, không được bỏ mặc ─────────────────────
 def test_khoi_driver_an_luc_binh_thuong(trang):
     pg, _ = trang

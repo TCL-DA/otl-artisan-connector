@@ -55,28 +55,22 @@ Hai chỗ khác với bản `.exe`, do trình duyệt:
 
 * **Lần đầu** Chrome hỏi chọn cáp một lần (hộp thoại đã lọc sẵn theo chip CH340 / CP210x / PL2303 /
   FTDI). Từ lần sau `navigator.serial.getPorts()` nhớ luôn, bấm một nút là chạy.
-* Trình duyệt **không cho trang web biết cổng tên là gì** (`getInfo()` chỉ có VID/PID), nên tệp
-  `.aset` cần bạn điền `COM…` một lần — trang nhớ lại cho lần sau.
+* Trình duyệt **không cho trang web biết số cổng COM** (`getInfo()` chỉ có mã chip VID:PID), nên
+  lần đầu bạn gõ số cổng một lần — gõ `5`, `com5` hay dán nguyên dòng Chrome hiện
+  `USB-SERIAL CH340 (COM5)` đều được. Nút **XEM TÊN CỔNG** mở lại danh sách của Chrome để nhìn số.
+  Trang nhớ số đó **theo từng cáp**; lần sau cắm đúng cáp đó là tự tải tệp, không hỏi nữa.
+* Artisan nạp tệp xong **chưa mở cổng** — phải bấm **ON** trong Artisan. Trang canh 5 phút và tự nhận
+  ra lúc Artisan giữ cổng.
+
+Tệp tải về có tên đọc là hiểu — máy · cổng · đường nối · ngày:
+`OTL-AUTO-CMS_COM5_57600-8N1-RTU_2026-11-10.aset` (bản `.exe` đặt tên y hệt).
 
 Trang web và Artisan **không giữ cùng một cổng COM được**: dò xong hãy để trang yên, mở Artisan.
 
-Mã nguồn: [`do-web.js`](do-web.js). Bài kiểm: `node --test test-do-web.mjs` (25 bài — khung Modbus
-RTU/ASCII, bảng ô ba máy, vá tệp `.aset`) và `python -m pytest test-trang.py -q` (15 bài — mở trang
-bằng Chromium thật, kiểm hai tab, một nút, và bố cục ở cỡ **điện thoại 390 px**: không tràn ngang,
-chữ không dưới 15 px, ô chạm không dưới 40 px). Phần cổng COM thật phải bấm tay.
-
----|---|---|
-| Tự liệt kê và xếp thứ tự cổng COM | có | không — người dùng tự chọn cổng trong hộp thoại Chrome |
-| Cài driver cáp | có | không bao giờ |
-| Tự mở Artisan với tệp `.aset` | có | không — chỉ tải tệp về, người dùng bấm đúp |
-| Kiểm Artisan đã giữ được cổng chưa | có | không |
-| Dò tốc độ · Modbus · đọc BT/ET | có | **có** |
-
-Trang web và Artisan không giữ cùng một cổng COM được: dò xong phải đóng trang rồi mới mở Artisan.
-
-Mã nguồn khối đó: [`do-web.js`](do-web.js). Bài kiểm: `node --test test-do-web.mjs` (15 bài — khung
-Modbus RTU/ASCII và việc vá tệp `.aset`) và `python -m pytest test-trang.py -q` (5 bài — mở trang bằng
-Chromium thật). Phần cổng COM thật phải bấm tay: trình duyệt tự động không được cấp quyền cổng.
+Mã nguồn: [`do-web.js`](do-web.js). Bài kiểm: `node --test test-do-web.mjs` (33 bài — khung Modbus
+RTU/ASCII, bảng ô ba máy, vá tệp `.aset`, đọc tên cổng, tên tệp) và `python -m pytest test-trang.py -q`
+(mở trang bằng Chromium thật: hai tab, một nút, ô tên cổng, tải tệp, bố cục ở cỡ **điện thoại 390 px**).
+Phần cổng COM thật phải bấm tay.
 
 ---
 
